@@ -2,13 +2,11 @@
 #define UNSORTED_H_
 
 #include <math.h>
-#include <predict/predict.h>
 #include <stdbool.h>
-#include <stdio.h>
-#include <stdlib.h>
-/* #include <sys/time.h> */
-#include <time.h>
-/* #include <unistd.h> */
+#include <stdint.h>
+#include <string.h>
+
+#include "predict.h"
 
 /**
  * Set three-element vector to specified components.
@@ -60,7 +58,10 @@ double vec3_dot( const double v[ 3 ], const double u[ 3 ] );
  **/
 typedef struct
 {
-    double lat, lon, alt, theta;
+    double lat;
+    double lon;
+    double alt;
+    double theta;
 } geodetic_t;
 
 /**
@@ -68,7 +69,10 @@ typedef struct
  **/
 typedef struct
 {
-    double x, y, z, w;
+    double x;
+    double y;
+    double z;
+    double w;
 } vector_t;
 
 /**
@@ -84,10 +88,10 @@ typedef struct
  * \copyright GPLv2+
  **/
 char * SubString( const char * input_string,
-                  int buffer_length,
+                  int32_t buffer_length,
                   char * output_buffer,
-                  int start,
-                  int end );
+                  int32_t start,
+                  int32_t end );
 
 /**
  * Returns square of a double.
@@ -147,7 +151,7 @@ double ThetaG_JD( double jd );
  *
  * \copyright GPLv2+
  **/
-long DayNum( int month, int day, int year );
+int64_t DayNum( int32_t month, int32_t day, int32_t year );
 
 /**
  * Procedure Calculate_LatLonAlt will calculate the geodetic position of an

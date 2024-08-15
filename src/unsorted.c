@@ -1,3 +1,5 @@
+#include <stdint.h>
+
 #include "unsorted.h"
 
 #include "defs.h"
@@ -11,12 +13,13 @@ void vec3_set( double v[ 3 ], double x, double y, double z )
 
 double vec3_length( const double v[ 3 ] )
 {
-    return sqrt( v[ 0 ] * v[ 0 ] + v[ 1 ] * v[ 1 ] + v[ 2 ] * v[ 2 ] );
+    return sqrt( ( v[ 0 ] * v[ 0 ] ) + ( v[ 1 ] * v[ 1 ] ) +
+                 ( v[ 2 ] * v[ 2 ] ) );
 }
 
 double vec3_dot( const double v[ 3 ], const double u[ 3 ] )
 {
-    return ( v[ 0 ] * u[ 0 ] + v[ 1 ] * u[ 1 ] + v[ 2 ] * u[ 2 ] );
+    return ( ( v[ 0 ] * u[ 0 ] ) + ( v[ 1 ] * u[ 1 ] ) + ( v[ 2 ] * u[ 2 ] ) );
 }
 
 void vec3_mul_scalar( const double v[ 3 ], double a, double r[ 3 ] )
@@ -42,11 +45,12 @@ double Sqr( double arg )
 double FMod2p( double x )
 {
     /* Returns mod 2PI of argument */
-
-    double ret_val = fmod( x, 2 * M_PI );
+    double ret_val = fmod( x, ( double ) 2 * ( double ) M_PI );
 
     if( ret_val < 0.0 )
-        ret_val += ( 2 * M_PI );
+    {
+        ret_val += ( ( double ) 2 * ( double ) M_PI );
+    }
 
     return ret_val;
 }
@@ -72,17 +76,21 @@ double Julian_Date_of_Year( double year )
     /* Astronomical Formulae for Calculators, Jean Meeus, */
     /* pages 23-25. Calculate Julian Date of 0.0 Jan year */
 
-    long A, B, i;
-    double jdoy;
+    double y = year;
+    double jdoy = ( 30.6001 * 14.0 );
 
-    year = year - 1;
-    i = year / 100;
+    int64_t A;
+    int64_t B;
+    int64_t i;
+
+    y--;
+    i = ( int64_t ) y / 100.0;
     A = i;
-    i = A / 4;
-    B = 2 - A + i;
-    i = 365.25 * year;
-    i += 30.6001 * 14;
-    jdoy = i + 1720994.5 + B;
+    i = A / ( int64_t ) 4;
+    B = ( int64_t ) 2 - A + i;
+    i = ( int64_t ) ( 365.25 * y );
+    i += ( int64_t ) jdoy;
+    jdoy = ( double ) i + ( double ) 1720994.5 + ( double ) B;
 
     return jdoy;
 }
@@ -96,17 +104,22 @@ double Julian_Date_of_Epoch( double epoch )
     /* correspond to 2000-2056. Until the two-line element set format   */
     /* is changed, it is only valid for dates through 2056 December 31. */
 
-    double year, day;
+    double year;
+    double day;
 
     /* Modification to support Y2K */
     /* Valid 1957 through 2056     */
 
     day = modf( epoch * 1E-3, &year ) * 1E3;
 
-    if( year < 57 )
-        year = year + 2000;
+    if( year < 57.0 )
+    {
+        year += ( double ) 2000.0;
+    }
     else
-        year = year + 1900;
+    {
+        year += ( double ) 1900.0;
+    }
 
     return ( Julian_Date_of_Year( year ) + day );
 }
@@ -115,15 +128,18 @@ double ThetaG_JD( double jd )
 {
     /* Reference:  The 1992 Astronomical Almanac, page B6. */
 
-    double UT, TU, GMST;
+    double UT;
+    double TU;
+    double GMST;
+    double j = jd;
 
     double dummy;
-    UT = modf( jd + 0.5, &dummy );
-    jd = jd - UT;
-    TU = ( jd - 2451545.0 ) / 36525;
-    GMST = 24110.54841 +
-           TU * ( 8640184.812866 + TU * ( 0.093104 - TU * 6.2E-6 ) );
-    GMST = fmod( GMST + SECONDS_PER_DAY * EARTH_ROTATIONS_PER_SIDERIAL_DAY * UT,
+    UT = modf( j + 0.5, &dummy );
+    j -= UT;
+    TU = ( j - 2451545.0 ) / 36525.0;
+    GMST = 24110.54841 + ( TU * ( 8640184.812866 +
+                                  ( TU * ( 0.093104 - ( TU * 6.2E-6 ) ) ) ) );
+    GMST = fmod( GMST + (SECONDS_PER_DAY * EARTH_ROTATIONS_PER_SIDERIAL_DAY * UT),
                  SECONDS_PER_DAY );
 
     return ( 2 * M_PI * GMST / SECONDS_PER_DAY );
@@ -142,17 +158,19 @@ void Calculate_User_PosVel( double time,
 
     /* Reference:  The 1992 Astronomical Almanac, page K11. */
 
-    double c, sq, achcp;
+    double c;
+    double sq;
+    double achcp;
 
     geodetic->theta = FMod2p( ThetaG_JD( time ) + geodetic->lon ); /* LMST */
     c = 1 / sqrt( 1 + FLATTENING_FACTOR * ( FLATTENING_FACTOR - 2 ) *
                           Sqr( sin( geodetic->lat ) ) );
     sq = Sqr( 1 - FLATTENING_FACTOR ) * c;
-    achcp = ( EARTH_RADIUS_KM_WGS84 * c + geodetic->alt ) *
+    achcp = ( ( EARTH_RADIUS_KM_WGS84 * c ) + geodetic->alt ) *
             cos( geodetic->lat );
     obs_pos[ 0 ] = ( achcp * cos( geodetic->theta ) ); /* kilometers */
     obs_pos[ 1 ] = ( achcp * sin( geodetic->theta ) );
-    obs_pos[ 2 ] = ( ( EARTH_RADIUS_KM_WGS84 * sq + geodetic->alt ) *
+    obs_pos[ 2 ] = ( ( ( EARTH_RADIUS_KM_WGS84 * sq ) + geodetic->alt ) *
                      sin( geodetic->lat ) );
     obs_vel[ 0 ] = ( -EARTH_ANGULAR_VELOCITY *
                      obs_pos[ 1 ] ); /* kilometers/second
@@ -161,26 +179,32 @@ void Calculate_User_PosVel( double time,
     obs_vel[ 2 ] = ( 0 );
 }
 
-long DayNum( int m, int d, int y )
+int64_t DayNum( int32_t m, int32_t d, int32_t y )
 {
-    long dn;
-    double mm, yy;
+    int64_t dn;
+    double mm;
+    double yy;
 
-    if( m < 3 )
+    int32_t year = y;
+    int32_t month = m;
+
+    if( month < 3 )
     {
-        y--;
-        m += 12;
+        year -= 1;
+        month += 12;
     }
 
-    if( y < 57 )
-        y += 100;
+    if( year < 57 )
+    {
+        year += 100;
+    }
 
-    yy = ( double ) y;
-    mm = ( double ) m;
-    dn = ( long ) ( floor( 365.25 * ( yy - 80.0 ) ) -
-                    floor( 19.0 + yy / 100.0 ) + floor( 4.75 + yy / 400.0 ) -
-                    16.0 );
-    dn += d + 30 * m + ( long ) floor( 0.6 * mm - 0.3 );
+    yy = ( double ) year;
+    mm = ( double ) month;
+    dn = ( floor( 365.25 * ( yy - 80.0 ) ) - floor( 19.0 + ( yy / 100.0 ) ) +
+           floor( 4.75 + ( yy / 400.0 ) ) - 16.0 );
+    dn += ( int64_t ) d + ( 30 * ( int64_t ) m ) +
+          ( int64_t ) floor( ( 0.6 * mm ) - 0.3 );
     return dn;
 }
 
@@ -196,35 +220,44 @@ void Calculate_LatLonAlt( double time,
 
     /* Reference:  The 1992 Astronomical Almanac, page K12. */
 
-    double r, e2, phi, c;
+    double r;
+    double e2;
+    double phi;
+    double c;
+
+    double t = time;
 
     // Convert to julian time:
-    time += JULIAN_TIME_DIFF;
+    t += JULIAN_TIME_DIFF;
 
-    geodetic->theta = atan2( pos[ 1 ], pos[ 0 ] );                 /* radians */
-    geodetic->lon = FMod2p( geodetic->theta - ThetaG_JD( time ) ); /* radians */
+    geodetic->theta = atan2( pos[ 1 ], pos[ 0 ] );              /* radians */
+    geodetic->lon = FMod2p( geodetic->theta - ThetaG_JD( t ) ); /* radians */
     r = sqrt( Sqr( pos[ 0 ] ) + Sqr( pos[ 1 ] ) );
-    e2 = FLATTENING_FACTOR * ( 2 - FLATTENING_FACTOR );
+    e2 = FLATTENING_FACTOR * ( 2.0 - FLATTENING_FACTOR );
     geodetic->lat = atan2( pos[ 2 ], r ); /* radians */
 
     do
     {
         phi = geodetic->lat;
-        c = 1 / sqrt( 1 - e2 * Sqr( sin( phi ) ) );
+        c = 1.0 / sqrt( 1.0 - ( e2 * Sqr( sin( phi ) ) ) );
         geodetic->lat = atan2( pos[ 2 ] +
-                                   EARTH_RADIUS_KM_WGS84 * c * e2 * sin( phi ),
+                                   (EARTH_RADIUS_KM_WGS84 * c * e2 * sin( phi )),
                                r );
 
     } while( fabs( geodetic->lat - phi ) >= 1E-10 );
 
     geodetic->alt = r / cos( geodetic->lat ) -
-                    EARTH_RADIUS_KM_WGS84 * c; /* kilometers */
+                    (EARTH_RADIUS_KM_WGS84 * c); /* kilometers */
 
     if( geodetic->lat > PI_HALF )
-        geodetic->lat -= 2 * M_PI;
+    {
+        geodetic->lat -= ( double ) 2 * M_PI;
+    }
 
     if( geodetic->lon > M_PI )
-        geodetic->lat -= 2 * M_PI;
+    {
+        geodetic->lat -= ( double ) 2 * M_PI;
+    }
 }
 
 void Calculate_Obs( double time,
@@ -249,8 +282,15 @@ void Calculate_Obs( double time,
     /* based on *topocentric* position using the WGS '72 geoid and        */
     /* incorporating atmospheric refraction.                              */
 
-    double sin_lat, cos_lat, sin_theta, cos_theta, el, azim, top_s, top_e,
-        top_z;
+    double sin_lat;
+    double cos_lat;
+    double sin_theta;
+    double cos_theta;
+    double el;
+    double azim;
+    double top_s;
+    double top_e;
+    double top_z;
 
     double obs_pos[ 3 ];
     double obs_vel[ 3 ];
@@ -268,18 +308,22 @@ void Calculate_Obs( double time,
     cos_lat = cos( geodetic->lat );
     sin_theta = sin( geodetic->theta );
     cos_theta = cos( geodetic->theta );
-    top_s = sin_lat * cos_theta * range[ 0 ] +
-            sin_lat * sin_theta * range[ 1 ] - cos_lat * range[ 2 ];
-    top_e = -sin_theta * range[ 0 ] + cos_theta * range[ 1 ];
-    top_z = cos_lat * cos_theta * range[ 0 ] +
-            cos_lat * sin_theta * range[ 1 ] + sin_lat * range[ 2 ];
+    top_s = ( sin_lat * cos_theta * range[ 0 ] ) +
+            ( sin_lat * sin_theta * range[ 1 ] ) - ( cos_lat * range[ 2 ] );
+    top_e = ( -sin_theta * range[ 0 ] ) + ( cos_theta * range[ 1 ] );
+    top_z = ( cos_lat * cos_theta * range[ 0 ] ) +
+            ( cos_lat * sin_theta * range[ 1 ] ) + ( sin_lat * range[ 2 ] );
     azim = atan( -top_e / top_s ); /* Azimuth */
 
     if( top_s > 0.0 )
+    {
         azim = azim + PI;
+    }
 
     if( azim < 0.0 )
-        azim = azim + 2 * M_PI;
+    {
+        azim = azim + ( 2.0 * M_PI );
+    }
 
     el = asin_( top_z / range_length );
     obs_set->x = azim;         /* Azimuth (radians)   */
@@ -293,7 +337,9 @@ void Calculate_Obs( double time,
     /**** End bypass ****/
 
     if( obs_set->y < 0.0 )
+    {
         obs_set->y = el; /* Reset to true elevation */
+    }
 }
 
 void Calculate_RADec( double time,
@@ -305,9 +351,32 @@ void Calculate_RADec( double time,
     /* Reference:  Methods of Orbit Determination by  */
     /*             Pedro Ramon Escobal, pp. 401-402   */
 
-    double phi, theta, sin_theta, cos_theta, sin_phi, cos_phi, az, el, Lxh, Lyh,
-        Lzh, Sx, Ex, Zx, Sy, Ey, Zy, Sz, Ez, Zz, Lx, Ly, Lz, cos_delta,
-        sin_alpha, cos_alpha;
+    double phi;
+    double theta;
+    double sin_theta;
+    double cos_theta;
+    double sin_phi;
+    double cos_phi;
+    double az;
+    double el;
+    double Lxh;
+    double Lyh;
+    double Lzh;
+    double Sx;
+    double Ex;
+    double Zx;
+    double Sy;
+    double Ey;
+    double Zy;
+    double Sz;
+    double Ez;
+    double Zz;
+    double Lx;
+    double Ly;
+    double Lz;
+    double cos_delta;
+    double sin_alpha;
+    double cos_alpha;
 
     Calculate_Obs( time, pos, vel, geodetic, obs_set );
 
@@ -331,9 +400,9 @@ void Calculate_RADec( double time,
     Sz = -cos_phi;
     Ez = 0.0;
     Zz = sin_phi;
-    Lx = Sx * Lxh + Ex * Lyh + Zx * Lzh;
-    Ly = Sy * Lxh + Ey * Lyh + Zy * Lzh;
-    Lz = Sz * Lxh + Ez * Lyh + Zz * Lzh;
+    Lx = ( Sx * Lxh ) + ( Ex * Lyh ) + ( Zx * Lzh );
+    Ly = ( Sy * Lxh ) + ( Ey * Lyh ) + ( Zy * Lzh );
+    Lz = ( Sz * Lxh ) + ( Ez * Lyh ) + ( Zz * Lzh );
     obs_set->y = asin_( Lz ); /* Declination (radians) */
     cos_delta = sqrt( 1.0 - Sqr( Lz ) );
     sin_alpha = Ly / cos_delta;
@@ -345,35 +414,40 @@ void Calculate_RADec( double time,
 /* .... SGP4/SDP4 functions end .... */
 
 char * SubString( const char * string,
-                  int buffer_length,
+                  int32_t buffer_length,
                   char * output_buffer,
-                  int start,
-                  int end )
+                  int32_t start,
+                  int32_t end )
 {
-    unsigned x, y;
+    int32_t x;
+    int32_t y = 0;
+    char * retp = NULL;
 
-    if( ( end >= start ) && ( buffer_length > end - start + 2 ) )
+    if( ( end >= start ) &&
+        ( buffer_length > ( end - start + ( int32_t ) 2 ) ) )
     {
-        for( x = start, y = 0; x <= end && string[ x ] != 0; x++ )
+        for( x = start; ( x <= end ) && ( string[ x ] != '\0' ); x++ )
+        {
             if( string[ x ] != ' ' )
             {
                 output_buffer[ y ] = string[ x ];
                 y++;
             }
+        }
 
         output_buffer[ y ] = 0;
-        return output_buffer;
+        retp = output_buffer;
     }
-    else
-        return NULL;
+
+    return retp;
 }
 
 double acos_( double arg )
 {
-    return acos( arg < -1.0 ? -1.0 : ( arg > 1.0 ? 1.0 : arg ) );
+    return acos( ( arg < -1.0 ) ? -1.0 : ( ( arg > 1.0 ) ? 1.0 : arg ) );
 }
 
 double asin_( double arg )
 {
-    return asin( arg < -1.0 ? -1.0 : ( arg > 1.0 ? 1.0 : arg ) );
+    return asin( ( arg < -1.0 ) ? -1.0 : ( ( arg > 1.0 ) ? 1.0 : arg ) );
 }
