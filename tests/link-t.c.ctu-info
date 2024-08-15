@@ -1,0 +1,3 @@
+{"summary": "MisraExternalIdentifiers", "data": [{"name": "main", "file": "app/libs/libpredict/tests/link-t.c", "line": 9, "column": 5, "decl": false}]}
+{"summary": "MisraInternalIdentifiers", "data": []}
+{"summary": "MisraLocalIdentifiers", "data": [{"name": "argv", "file": "app/libs/libpredict/tests/link-t.c", "line": 9, "column": 26}, {"name": "argc", "file": "app/libs/libpredict/tests/link-t.c", "line": 9, "column": 14}]}
