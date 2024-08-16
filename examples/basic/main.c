@@ -47,7 +47,7 @@ int main( int argc, char ** argv )
     {
         printf( "\033[0;0H" ); // print from start of the terminal
 
-        predict_julian_date_t curr_time = predict_to_julian( time( NULL ) );
+        predict_julian_date_t curr_time = julian_from_timestamp( time( NULL ) );
 
         // Predict ISS
         struct predict_position iss_orbit;
