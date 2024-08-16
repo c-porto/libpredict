@@ -1,6 +1,7 @@
 #ifndef PREDICT_H_
 #define PREDICT_H_
 
+#include <stdint.h>
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -78,9 +79,9 @@ typedef struct
     double xli;
     double sghs;
     /// Do loop flag:
-    int loopFlag;
+    int32_t loopFlag;
     /// Epoch restart flag:
-    int epochRestartFlag;
+    int32_t epochRestartFlag;
 } deep_arg_dynamic_t;
 
 /**
@@ -90,11 +91,11 @@ typedef struct
 struct predict_sdp4
 {
     /// Lunar terms done?
-    int lunarTermsDone;
+    int32_t lunarTermsDone;
     /// Resonance flag:
-    int resonanceFlag;
+    int32_t resonanceFlag;
     /// Synchronous flag:
-    int synchronousFlag;
+    int32_t synchronousFlag;
 
     /// Static variables from SDP4():
     double x3thm1;
@@ -191,7 +192,7 @@ struct predict_sdp4
 struct predict_sgp4
 {
     /// Simple flag
-    int simpleFlag;
+    int32_t simpleFlag;
 
     /// Static variables from original SGP4() (time-independent, and might
     /// probably have physical meaningfulness)
@@ -236,41 +237,6 @@ struct predict_sgp4
 };
 
 /**
- * Get the major version number of the library
- *
- * \return Major version number
- */
-int predict_version_major( void );
-
-/**
- * Get the minor version number of the library
- *
- * \return Minor version number
- */
-int predict_version_minor( void );
-
-/**
- * Get the patch version number of the library
- *
- * \return Patch version number
- */
-int predict_version_patch( void );
-
-/**
- * Get the version number of the library
- *
- * \return 2 digit major, 2 digit minor, 2 digit patch decimal version number
- */
-int predict_version( void );
-
-/**
- * Get the version number string of the library
- *
- * \return Version number string ("major.minor.patch")
- */
-char * predict_version_string( void );
-
-/**
  * The representation of time used by libpredict: The number of days since
  *31Dec79 00:00:00 UTC.
  **/
@@ -309,13 +275,13 @@ enum predict_ephemeris
 typedef struct
 {
     /// Satellite number (line 1, field 2)
-    int satellite_number;
+    int32_t satellite_number;
     /// Element number (line 1, field 13)
-    long element_number;
+    int64_t element_number;
     /// International designator (line 1, fields 4, 5, 6)
     char designator[ 10 ];
     /// Epoch year (last two digits) (line 1, field 7)
-    int epoch_year;
+    int32_t epoch_year;
     /// Epoch day (day of year and fractional portion of day, line 1, field 8)
     double epoch_day;
     /// Inclination (line 2, field 3)
@@ -338,7 +304,7 @@ typedef struct
     /// BSTAR drag term (decimal point assumed, line 1, field 11)
     double bstar_drag_term;
     /// Number of revolutions around Earth at epoch (line 2, field 9)
-    int revolutions_at_epoch;
+    int32_t revolutions_at_epoch;
 
     /// Which perturbation model to use
     enum predict_ephemeris ephemeris;
@@ -395,13 +361,13 @@ struct predict_position
     /// Footprint diameter in km
     double footprint;
     /// Whether satellite is eclipsed by the earth
-    int eclipsed;
+    int32_t eclipsed;
     /// Eclipse depth
     double eclipse_depth;
     /// Orbital phase (mean anomaly)
     double phase;
     /// The current number of revolutions around Earth
-    long revolutions;
+    int64_t revolutions;
 
     /// Current inclination (from xinck within sgp4/sdp4)
     double inclination;

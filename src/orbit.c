@@ -50,13 +50,13 @@ predict_orbital_elements_t * predict_parse_tle(
                                          substring_buffer,
                                          18,
                                          19 ) );
-        strncpy( m->designator,
-                 SubString( tle_line_1,
-                            SUBSTRING_BUFFER_LENGTH,
-                            substring_buffer,
-                            9,
-                            16 ),
-                 8 );
+        ( void ) strncpy( m->designator,
+                          SubString( tle_line_1,
+                                     SUBSTRING_BUFFER_LENGTH,
+                                     substring_buffer,
+                                     9,
+                                     16 ),
+                          8 );
         m->epoch_day = atof( SubString( tle_line_1,
                                         SUBSTRING_BUFFER_LENGTH,
                                         substring_buffer,
@@ -118,7 +118,14 @@ predict_orbital_elements_t * predict_parse_tle(
                                                    67 ) );
 
         /* Period > 225 minutes is deep space */
-        double ao, xnodp, dd1, dd2, delo, a1, del1, r1;
+        double ao;
+        double xnodp;
+        double dd1;
+        double dd2;
+        double delo;
+        double a1;
+        double del1;
+        double r1;
         double temp = TWO_PI / MINUTES_PER_DAY / MINUTES_PER_DAY;
         double xno = m->mean_motion * temp *
                      MINUTES_PER_DAY; // from old TLE struct
@@ -126,17 +133,17 @@ predict_orbital_elements_t * predict_parse_tle(
         dd2 = TWO_THIRD;
         a1 = pow( dd1, dd2 );
         r1 = cos( m->inclination * M_PI / 180.0 );
-        dd1 = ( 1.0 - m->eccentricity * m->eccentricity );
-        temp = CK2 * 1.5f * ( r1 * r1 * 3.0 - 1.0 ) / pow( dd1, 1.5 );
+        dd1 = ( 1.0 - ( m->eccentricity * m->eccentricity ) );
+        temp = CK2 * 1.5f * ( ( r1 * r1 * 3.0 ) - 1.0 ) / pow( dd1, 1.5 );
         del1 = temp / ( a1 * a1 );
-        ao = a1 *
-             ( 1.0 - del1 * ( TWO_THIRD * .5 +
-                              del1 * ( del1 * 1.654320987654321 + 1.0 ) ) );
+        ao = a1 * ( 1.0 - ( del1 * ( ( TWO_THIRD * 0.5 ) +
+                                     ( del1 * ( ( del1 * 1.654320987654321 ) +
+                                                1.0 ) ) ) ) );
         delo = temp / ( ao * ao );
         xnodp = xno / ( delo + 1.0 );
 
         /* Select a deep-space/near-earth ephemeris */
-        if( TWO_PI / xnodp / MINUTES_PER_DAY >= 0.15625 )
+        if( ( TWO_PI / xnodp / MINUTES_PER_DAY ) >= 0.15625 )
         {
             m->ephemeris = EPHEMERIS_SDP4;
 
@@ -195,13 +202,15 @@ double predict_perigee( const predict_orbital_elements_t * m )
     double a1 = pow( XKE / xno, TWO_THIRD );
     double cosio = cos( m->inclination * M_PI / 180.0 );
     double theta2 = cosio * cosio;
-    double x3thm1 = 3 * theta2 - 1.0;
+    double x3thm1 = ( 3.0 * theta2 ) - 1.0;
     double eosq = m->eccentricity * m->eccentricity;
     double betao2 = 1.0 - eosq;
     double betao = sqrt( betao2 );
     double del1 = 1.5 * CK2 * x3thm1 / ( a1 * a1 * betao * betao2 );
-    double ao = a1 * ( 1.0 - del1 * ( 0.5 * TWO_THIRD +
-                                      del1 * ( 1.0 + 134.0 / 81.0 * del1 ) ) );
+    double ao = a1 *
+                ( 1.0 -
+                  ( del1 * ( ( 0.5 * TWO_THIRD ) +
+                             ( del1 * ( 1.0 + ( 134.0 / 81.0 * del1 ) ) ) ) ) );
     double delo = 1.5 * CK2 * x3thm1 / ( ao * ao * betao * betao2 );
     double aodp = ao / ( 1.0 - delo );
 
@@ -214,37 +223,47 @@ bool predict_aos_happens( const predict_orbital_elements_t * m,
     /* This function returns true if the satellite pointed to by
        "x" can ever rise above the horizon of the ground station. */
 
-    double lin, apogee;
+    bool retval;
+    double lin;
+    double apogee;
 
     if( m->mean_motion == 0.0 )
-        return false;
+    {
+        retval = false;
+    }
     else
     {
         lin = m->inclination;
 
         if( lin >= 90.0 )
+        {
             lin = 180.0 - lin;
+        }
 
         apogee = predict_apogee( m );
 
         if( ( acos( EARTH_RADIUS_KM_WGS84 /
                     ( apogee + EARTH_RADIUS_KM_WGS84 ) ) +
               ( lin * M_PI / 180.0 ) ) > fabs( latitude ) )
-            return true;
+        {
+            retval = true;
+        }
         else
-            return false;
+        {
+            retval = false;
+        }
     }
+
+    return retval;
 }
 
 /* This is the stuff we need to do repetitively while tracking. */
 /* This is the old Calc() function. */
-int predict_orbit( const predict_orbital_elements_t * orbital_elements,
-                   struct predict_position * m,
-                   double utc )
+int32_t predict_orbit( const predict_orbital_elements_t * orbital_elements,
+                       struct predict_position * m,
+                       double utc )
 {
-    /* Set time to now if now time is provided: */
-    if( utc == 0 )
-        utc = predict_to_julian( time( NULL ) );
+    int32_t err = 0;
 
     /* Satellite position and velocity vectors */
     vec3_set( m->position, 0, 0, 0 );
@@ -255,7 +274,7 @@ int predict_orbit( const predict_orbital_elements_t * orbital_elements,
 
     /* Convert satellite's epoch time to Julian  */
     /* and calculate time since epoch in minutes */
-    double epoch = 1000.0 * orbital_elements->epoch_year +
+    double epoch = ( 1000.0 * orbital_elements->epoch_year ) +
                    orbital_elements->epoch_day;
     double jul_epoch = Julian_Date_of_Epoch( epoch );
     double tsince = ( julTime - jul_epoch ) * MINUTES_PER_DAY;
@@ -271,58 +290,65 @@ int predict_orbit( const predict_orbital_elements_t * orbital_elements,
             sgp4_predict( orbital_elements->ephemeris_data, tsince, &output );
             break;
         default:
-            return -1;
+            err = -1;
+            break;
     }
-    m->position[ 0 ] = output.pos[ 0 ];
-    m->position[ 1 ] = output.pos[ 1 ];
-    m->position[ 2 ] = output.pos[ 2 ];
-    m->velocity[ 0 ] = output.vel[ 0 ];
-    m->velocity[ 1 ] = output.vel[ 1 ];
-    m->velocity[ 2 ] = output.vel[ 2 ];
-    m->phase = output.phase;
-    m->argument_of_perigee = output.omgadf;
-    m->inclination = output.xinck;
-    m->right_ascension = output.xnodek;
 
-    /* TODO: Remove? Scale position and velocity vectors to km and km/sec */
-    Convert_Sat_State( m->position, m->velocity );
+    if( err == 0 )
+    {
+        m->position[ 0 ] = output.pos[ 0 ];
+        m->position[ 1 ] = output.pos[ 1 ];
+        m->position[ 2 ] = output.pos[ 2 ];
+        m->velocity[ 0 ] = output.vel[ 0 ];
+        m->velocity[ 1 ] = output.vel[ 1 ];
+        m->velocity[ 2 ] = output.vel[ 2 ];
+        m->phase = output.phase;
+        m->argument_of_perigee = output.omgadf;
+        m->inclination = output.xinck;
+        m->right_ascension = output.xnodek;
 
-    /* Calculate satellite Lat North, Lon East and Alt. */
-    geodetic_t sat_geodetic;
-    Calculate_LatLonAlt( utc, m->position, &sat_geodetic );
+        /* TODO: Remove? Scale position and velocity vectors to km and km/sec */
+        Convert_Sat_State( m->position, m->velocity );
 
-    m->latitude = sat_geodetic.lat;
-    m->longitude = sat_geodetic.lon;
-    m->altitude = sat_geodetic.alt;
+        /* Calculate satellite Lat North, Lon East and Alt. */
+        geodetic_t sat_geodetic;
+        Calculate_LatLonAlt( utc, m->position, &sat_geodetic );
 
-    // Calculate solar position
-    double solar_vector[ 3 ];
-    sun_predict( m->time, solar_vector );
+        m->latitude = sat_geodetic.lat;
+        m->longitude = sat_geodetic.lon;
+        m->altitude = sat_geodetic.alt;
 
-    // Find eclipse depth and if sat is eclipsed
-    m->eclipsed = is_eclipsed( m->position, solar_vector, &m->eclipse_depth );
+        // Calculate solar position
+        double solar_vector[ 3 ];
+        sun_predict( m->time, solar_vector );
 
-    // Calculate footprint
-    m->footprint = 2.0 * EARTH_RADIUS_KM_WGS84 *
-                   acos( EARTH_RADIUS_KM_WGS84 /
-                         ( EARTH_RADIUS_KM_WGS84 + m->altitude ) );
+        // Find eclipse depth and if sat is eclipsed
+        m->eclipsed = is_eclipsed( m->position,
+                                   solar_vector,
+                                   &m->eclipse_depth );
 
-    // Calculate current number of revolutions around Earth
-    double temp = TWO_PI / MINUTES_PER_DAY / MINUTES_PER_DAY;
-    double age = julTime - jul_epoch;
-    double xno = orbital_elements->mean_motion * temp * MINUTES_PER_DAY;
-    double xmo = orbital_elements->mean_anomaly * M_PI / 180.0;
-    m->revolutions = ( long ) floor(
-                         ( xno * MINUTES_PER_DAY / ( M_PI * 2.0 ) +
-                           age * orbital_elements->bstar_drag_term ) *
-                             age +
-                         xmo / ( 2.0 * M_PI ) ) +
-                     orbital_elements->revolutions_at_epoch;
+        // Calculate footprint
+        m->footprint = 2.0 * EARTH_RADIUS_KM_WGS84 *
+                       acos( EARTH_RADIUS_KM_WGS84 /
+                             ( EARTH_RADIUS_KM_WGS84 + m->altitude ) );
 
-    // calculate whether orbit is decayed
-    m->decayed = predict_decayed( orbital_elements, utc );
+        // Calculate current number of revolutions around Earth
+        double temp = TWO_PI / MINUTES_PER_DAY / MINUTES_PER_DAY;
+        double age = julTime - jul_epoch;
+        double xno = orbital_elements->mean_motion * temp * MINUTES_PER_DAY;
+        double xmo = orbital_elements->mean_anomaly * M_PI / 180.0;
+        m->revolutions = ( int64_t ) floor(
+                             ( ( ( xno * MINUTES_PER_DAY / ( M_PI * 2.0 ) ) +
+                                 ( age * orbital_elements->bstar_drag_term ) ) *
+                               age ) +
+                             ( xmo / ( 2.0 * M_PI ) ) ) +
+                         orbital_elements->revolutions_at_epoch;
 
-    return 0;
+        // calculate whether orbit is decayed
+        m->decayed = predict_decayed( orbital_elements, utc );
+    }
+
+    return err;
 }
 
 bool predict_decayed( const predict_orbital_elements_t * orbital_elements,
@@ -346,7 +372,9 @@ bool predict_decayed( const predict_orbital_elements_t * orbital_elements,
 /* Calculates if a position is eclipsed.  */
 bool is_eclipsed( const double pos[ 3 ], const double sol[ 3 ], double * depth )
 {
-    double Rho[ 3 ], earth[ 3 ];
+    bool retval;
+    double Rho[ 3 ];
+    double earth[ 3 ];
 
     /* Determine partial eclipse */
     double sd_earth = asin_( EARTH_RADIUS_KM_WGS84 / vec3_length( pos ) );
@@ -359,11 +387,19 @@ bool is_eclipsed( const double pos[ 3 ], const double sol[ 3 ], double * depth )
     *depth = sd_earth - sd_sun - delta;
 
     if( sd_earth < sd_sun )
-        return false;
+    {
+        retval = false;
+    }
     else if( *depth >= 0 )
-        return true;
+    {
+        retval = true;
+    }
     else
-        return false;
+    {
+        retval = false;
+    }
+
+    return retval;
 }
 
 double predict_squint_angle( const predict_observer_t * observer,
@@ -376,19 +412,21 @@ double predict_squint_angle( const predict_observer_t * observer,
     double bz = sin( alat );
 
     double cx = bx;
-    double cy = by * cos( orbit->inclination ) - bz * sin( orbit->inclination );
-    double cz = by * sin( orbit->inclination ) + bz * cos( orbit->inclination );
-    double ax = cx * cos( orbit->right_ascension ) -
-                cy * sin( orbit->right_ascension );
-    double ay = cx * sin( orbit->right_ascension ) +
-                cy * cos( orbit->right_ascension );
+    double cy = ( by * cos( orbit->inclination ) ) -
+                ( bz * sin( orbit->inclination ) );
+    double cz = ( by * sin( orbit->inclination ) ) +
+                ( bz * cos( orbit->inclination ) );
+    double ax = ( cx * cos( orbit->right_ascension ) ) -
+                ( cy * sin( orbit->right_ascension ) );
+    double ay = ( cx * sin( orbit->right_ascension ) ) +
+                ( cy * cos( orbit->right_ascension ) );
     double az = cz;
 
     struct predict_observation obs;
     predict_observe_orbit( observer, orbit, &obs );
-    double squint = acos(
-        -( ax * obs.range_x + ay * obs.range_y + az * obs.range_z ) /
-        obs.range );
+    double squint = acos( -( ( ax * obs.range_x ) + ( ay * obs.range_y ) +
+                             ( az * obs.range_z ) ) /
+                          obs.range );
 
     return squint;
 }
