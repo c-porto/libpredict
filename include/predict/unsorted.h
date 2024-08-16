@@ -8,9 +8,6 @@ extern "C" {
 #include <math.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include <string.h>
-
-#include "predict.h"
 
 #define unsortedPRIME_ANGLE( angle ) \
     ( angle ) - 360.0 * floor( ( angle ) / 360.0 )
@@ -23,6 +20,24 @@ extern "C" {
             ( angle ) -= ( double ) 2 * M_PI; \
         }                                     \
     } while( 0 )
+
+#define unsortedDEGREES_TO_RADIANS( angle ) ( ( angle ) * M_PI / 180.0 )
+
+#define unsortedRADIANS_TO_DEGREES( angle ) ( ( angle ) * 180.0 / M_PI )
+
+/**
+ * This function reduces angles greater than two pi by subtracting two pi
+ * from the angle
+ *
+ * \copyright GPLv2+
+ **/
+static inline double FixAngle( double x )
+{
+    while( x > 2 * M_PI )
+        x -= 2 * M_PI;
+
+    return x;
+}
 
 /**
  * Set three-element vector to specified components.
