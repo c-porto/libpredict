@@ -156,7 +156,7 @@ predict_orbital_elements_t * predict_parse_tle(
             else
             {
                 // Initialize ephemeris data structure
-                sdp4_init( m, ( struct predict_sdp4 * ) m->ephemeris_data );
+                sdp4_init( m, m->ephemeris_data );
             }
         }
         else
@@ -172,7 +172,7 @@ predict_orbital_elements_t * predict_parse_tle(
             else
             {
                 // Initialize ephemeris data structure
-                sgp4_init( m, ( struct predict_sgp4 * ) m->ephemeris_data );
+                sgp4_init( m, m->ephemeris_data );
             }
         }
     }
@@ -214,7 +214,7 @@ double predict_perigee( const predict_orbital_elements_t * m )
     double delo = 1.5 * CK2 * x3thm1 / ( ao * ao * betao * betao2 );
     double aodp = ao / ( 1.0 - delo );
 
-    return ( aodp * ( 1 - m->eccentricity ) - AE ) * EARTH_RADIUS_KM_WGS84;
+    return ( aodp * ( 1.0 - m->eccentricity ) - AE ) * EARTH_RADIUS_KM_WGS84;
 }
 
 bool predict_aos_happens( const predict_orbital_elements_t * m,
