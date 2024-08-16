@@ -1,6 +1,6 @@
 <h1 align='center'> libpredict </h1>
 
-A satellite orbit prediction library.
+<h2 align='center'> <strong> A satellite orbit prediction library. </strong> </h2>
 
 ## Disclaimer
 
