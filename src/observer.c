@@ -262,7 +262,7 @@ enum step_pass_direction
  *the derivative of the elevation is negative \return Time for when we have
  *stepped out of the pass \copyright GPLv2+
  **/
-double step_pass( const predict_observer_t * observer,
+static double step_pass( const predict_observer_t * observer,
                   const predict_orbital_elements_t * orbital_elements,
                   double curr_time,
                   enum step_pass_direction direction )
@@ -348,9 +348,10 @@ struct predict_observation predict_next_los(
  * \param time Time
  * \return Derivative of elevation at input time
  **/
-double elevation_derivative( const predict_observer_t * observer,
-                             const predict_orbital_elements_t * orbital_elements,
-                             double time )
+static double elevation_derivative(
+    const predict_observer_t * observer,
+    const predict_orbital_elements_t * orbital_elements,
+    double time )
 {
     struct predict_position orbit;
     struct predict_observation observation;
@@ -369,7 +370,7 @@ double elevation_derivative( const predict_observer_t * observer,
  * \return Observation of satellite for maximum elevation between lower and
  *upper time brackets
  **/
-struct predict_observation find_max_elevation(
+static struct predict_observation find_max_elevation(
     const predict_observer_t * observer,
     const predict_orbital_elements_t * orbital_elements,
     double lower_time,

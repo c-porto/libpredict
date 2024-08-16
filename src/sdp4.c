@@ -306,7 +306,7 @@ void sdp4_predict( const struct predict_sdp4 * m,
  * \param deep_arg Deep arg
  * \copyright GPLv2+
  **/
-double ThetaG( double epoch, deep_arg_fixed_t * deep_arg )
+static double ThetaG( double epoch, deep_arg_fixed_t * deep_arg )
 {
     double year, day, UT, jd, TU, GMST, ThetaG;
 

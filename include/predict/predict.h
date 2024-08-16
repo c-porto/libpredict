@@ -241,7 +241,7 @@ typedef double predict_julian_date_t;
  * \param time Time in UTC
  * \return Julian day in UTC
  **/
-predict_julian_date_t julian_from_timestamp(uint64_t time);
+predict_julian_date_t julian_from_timestamp( uint64_t time );
 
 /**
  * Convert Unix timestamp in ms to Julian. (Both in UTC)
@@ -249,7 +249,7 @@ predict_julian_date_t julian_from_timestamp(uint64_t time);
  * \param time Time, millisecond resolution, in UTC
  * \return Julian day in UTC
  **/
-predict_julian_date_t julian_from_timestamp_ms(uint64_t time_ms);
+predict_julian_date_t julian_from_timestamp_ms( uint64_t time_ms );
 
 /**
  * Convert Julian time to Unix timestamp. (Both in UTC)
@@ -257,7 +257,7 @@ predict_julian_date_t julian_from_timestamp_ms(uint64_t time_ms);
  * \param Julian day in UTC
  * \return time Time in UTC
  **/
-uint64_t timestamp_from_julian(predict_julian_date_t date);
+uint64_t timestamp_from_julian( predict_julian_date_t date );
 
 /**
  * Convert Julian time to Unix timestamp. (Both in UTC)
@@ -265,7 +265,7 @@ uint64_t timestamp_from_julian(predict_julian_date_t date);
  * \param Julian day in UTC
  * \return time Time, millisecond resolution, in UTC
  **/
-uint64_t timestamp_ms_from_julian(predict_julian_date_t date);
+uint64_t timestamp_ms_from_julian( predict_julian_date_t date );
 
 /**
  * Simplified perturbation models used in modeling the satellite orbits.
@@ -395,9 +395,9 @@ struct predict_position
  * \return 0 if everything went fine
  * \copyright GPLv2+
  **/
-int predict_orbit( const predict_orbital_elements_t * orbital_elements,
-                   struct predict_position * x,
-                   predict_julian_date_t time );
+int32_t predict_orbit( const predict_orbital_elements_t * orbital_elements,
+                       struct predict_position * x,
+                       predict_julian_date_t time );
 
 /**
  * Find whether an orbit is geosynchronous.
