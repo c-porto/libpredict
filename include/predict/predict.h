@@ -7,7 +7,6 @@ extern "C" {
 #endif
 
 #include <stdbool.h>
-#include <time.h>
 
 struct model_output
 {

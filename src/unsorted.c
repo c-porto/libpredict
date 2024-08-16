@@ -1,5 +1,5 @@
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #include <predict/defs.h>
 #include <predict/unsorted.h>

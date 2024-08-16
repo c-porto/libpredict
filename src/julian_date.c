@@ -23,23 +23,28 @@ predict_julian_date_t julian_from_timestamp_ms( uint64_t timestamp_ms )
 
 uint64_t timestamp_from_julian( predict_julian_date_t date )
 {
-    if( date <= UNIX_EPOCH_IN_JULIAN )
+    uint64_t timestamp = 0;
+    double tmp;
+
+    if( date > UNIX_EPOCH_IN_JULIAN )
     {
-        /* Julian timestamp is on / before unix epoch */
-        return 0;
+        tmp = ( ( date - UNIX_EPOCH_IN_JULIAN ) * SECONDS_IN_DAY );
+        timestamp = ( uint64_t ) tmp;
     }
 
-    return ( uint64_t ) ( ( date - UNIX_EPOCH_IN_JULIAN ) * SECONDS_IN_DAY );
+    return timestamp;
 }
 
 uint64_t timestamp_ms_from_julian( predict_julian_date_t date )
 {
-    if( date <= UNIX_EPOCH_IN_JULIAN )
+    uint64_t timestamp = 0;
+    double tmp;
+
+    if( date > UNIX_EPOCH_IN_JULIAN )
     {
-        /* Julian timestamp is on / before unix epoch */
-        return 0;
+        tmp = ( ( date - UNIX_EPOCH_IN_JULIAN ) * ( 1000.0 * SECONDS_IN_DAY ) );
+        timestamp = ( uint64_t ) tmp;
     }
 
-    return ( uint64_t ) ( ( date - UNIX_EPOCH_IN_JULIAN ) *
-                          ( 1000 * SECONDS_IN_DAY ) );
+    return timestamp;
 }

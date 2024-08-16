@@ -33,10 +33,16 @@ extern "C" {
  **/
 static inline double FixAngle( double x )
 {
-    while( x > 2 * M_PI )
-        x -= 2 * M_PI;
+    bool is_reduced = x < ( 2.0 * M_PI );
+    double angle = x;
 
-    return x;
+    while( !is_reduced )
+    {
+        angle -= 2.0 * M_PI;
+        is_reduced = angle < ( 2.0 * M_PI );
+    }
+
+    return angle;
 }
 
 /**
