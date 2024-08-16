@@ -7,6 +7,29 @@
 This is a fork of **[la1k/libpredict](https://github.com/la1k/libpredict/)** and is inspired by **[philcrump's](https://github.com/philcrump/libpredict/)** fork of the same library. 
 See the [License](#license) section for specifics.
 
+## Major differences from la1k's
+
+This fork is intended to be used by embedded systems so it supports static allocated
+structs instead of the dynamic allocated ones from the original library. Another major 
+change is that this fork intends to make the library MISRA-C 2012 compliant, which is 
+a requirement for many critical embedded applications, like satellite's. Because of 
+compliance pretty much every single function of the original library will be modified.
+
+## MISRA-C 2012 Compliance Progress
+
+The following list contains the status of the library files:
+
+- [X] Headers
+- [/] Orbit (Partially Compliant)
+- [ ] Observer
+- [X] SGP4
+- [ ] SDP4
+- [X] Sun
+- [ ] Moon
+- [X] Unsorted
+- [X] Julian Date
+- [ ] Refraction
+
 ## Building
 
 To build the library it should be as simple as running:
