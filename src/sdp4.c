@@ -1,13 +1,9 @@
-#include "sdp4.h"
-
 #include <math.h>
 #include <stdbool.h>
 
-#include "defs.h"
-#include "unsorted.h"
-
-/* Static Allocated sdp4 struct */
-static struct _sdp4 sdp4_;
+#include <predict/defs.h>
+#include <predict/sdp4.h>
+#include <predict/unsorted.h>
 
 /// Entry points of deep()
 #define DPSecular  1
@@ -22,7 +18,7 @@ static struct _sdp4 sdp4_;
  * \copyright GPLv2+
  **/
 void sdp4_deep_initialize( const predict_orbital_elements_t * tle,
-                           struct _sdp4 * m,
+                           struct predict_sdp4 * m,
                            deep_arg_fixed_t * deep_arg );
 
 /**
@@ -32,15 +28,11 @@ void sdp4_deep_initialize( const predict_orbital_elements_t * tle,
  * \param deep_dyn Dynamic part of deep_arg
  * \copyright GPLv2+
  **/
-void deep_arg_dynamic_init( const struct _sdp4 * m,
+void deep_arg_dynamic_init( const struct predict_sdp4 * m,
                             deep_arg_dynamic_t * deep_dyn );
 
-struct _sdp4 * sdp4_static_alloc( void )
-{
-    return &sdp4_;
-}
-
-void sdp4_init( const predict_orbital_elements_t * tle, struct _sdp4 * m )
+void sdp4_init( const predict_orbital_elements_t * tle,
+                struct predict_sdp4 * m )
 {
     m->lunarTermsDone = 0;
     m->resonanceFlag = 0;
@@ -72,8 +64,8 @@ void sdp4_init( const predict_orbital_elements_t * tle, struct _sdp4 * m )
     m->deep_arg.betao = sqrt( m->deep_arg.betao2 );
     del1 = 1.5 * CK2 * m->x3thm1 /
            ( a1 * a1 * m->deep_arg.betao * m->deep_arg.betao2 );
-    ao = a1 *
-         ( 1 - del1 * ( 0.5 * TWO_THIRD + del1 * ( 1 + 134 / 81 * del1 ) ) );
+    ao = a1 * ( 1 - del1 * ( 0.5 * TWO_THIRD +
+                             del1 * ( 1 + ( double ) 134 / 81 * del1 ) ) );
     delo = 1.5 * CK2 * m->x3thm1 /
            ( ao * ao * m->deep_arg.betao * m->deep_arg.betao2 );
     m->deep_arg.xnodp = m->xno / ( 1 + delo );
@@ -153,7 +145,7 @@ void sdp4_init( const predict_orbital_elements_t * tle, struct _sdp4 * m )
     sdp4_deep_initialize( tle, m, &( m->deep_arg ) );
 }
 
-void sdp4_predict( const struct _sdp4 * m,
+void sdp4_predict( const struct predict_sdp4 * m,
                    double tsince,
                    struct model_output * output )
 {
@@ -343,7 +335,7 @@ double ThetaG( double epoch, deep_arg_fixed_t * deep_arg )
 }
 
 void sdp4_deep_initialize( const predict_orbital_elements_t * tle,
-                           struct _sdp4 * m,
+                           struct predict_sdp4 * m,
                            deep_arg_fixed_t * deep_arg )
 {
     double a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, ainv2, aqnv, sgh, sini2, sh,
@@ -681,7 +673,7 @@ void sdp4_deep_initialize( const predict_orbital_elements_t * tle,
     return;
 }
 
-void deep_arg_dynamic_init( const struct _sdp4 * m,
+void deep_arg_dynamic_init( const struct predict_sdp4 * m,
                             deep_arg_dynamic_t * deep_dyn )
 {
     deep_dyn->savtsn = 1E20;
@@ -692,7 +684,7 @@ void deep_arg_dynamic_init( const struct _sdp4 * m,
     deep_dyn->atime = 0;
 }
 
-void sdp4_deep( const struct _sdp4 * m,
+void sdp4_deep( const struct predict_sdp4 * m,
                 int ientry,
                 const deep_arg_fixed_t * deep_arg,
                 deep_arg_dynamic_t * deep_dyn )

@@ -1,18 +1,9 @@
-#include "sgp4.h"
-
-#include "defs.h"
-#include "unsorted.h"
-
-/* Static Allocated sgp4 struct */
-static struct _sgp4 sgp4_;
-
-struct _sgp4 * sgp4_static_alloc( void )
-{
-    return &sgp4_;
-}
+#include <predict/defs.h>
+#include <predict/sgp4.h>
+#include <predict/unsorted.h>
 
 void sgp4_init( const predict_orbital_elements_t * orbital_elements,
-                struct _sgp4 * m )
+                struct predict_sgp4 * m )
 {
     m->simpleFlag = 0;
 
@@ -145,7 +136,7 @@ void sgp4_init( const predict_orbital_elements_t * orbital_elements,
     }
 }
 
-void sgp4_predict( const struct _sgp4 * m,
+void sgp4_predict( const struct predict_sgp4 * m,
                    double tsince,
                    struct model_output * output )
 {

@@ -1,6 +1,10 @@
 #ifndef PREDICT_DEFS_H_
 #define PREDICT_DEFS_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <float.h>
 #include <stdint.h>
 
@@ -185,5 +189,9 @@
 /// naming are consistent with this)
 #define THDT                                         ( ( double ) 4.3752691E-3 )
 ///@}
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

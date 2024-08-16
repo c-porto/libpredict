@@ -1,12 +1,28 @@
 #ifndef UNSORTED_H_
 #define UNSORTED_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <math.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
 
 #include "predict.h"
+
+#define unsortedPRIME_ANGLE( angle ) \
+    ( angle ) - 360.0 * floor( ( angle ) / 360.0 )
+
+#define unsortedFIX_ANGLE( angle, limit )     \
+    do                                        \
+    {                                         \
+        if( ( angle ) > ( limit ) )           \
+        {                                     \
+            ( angle ) -= ( double ) 2 * M_PI; \
+        }                                     \
+    } while( 0 )
 
 /**
  * Set three-element vector to specified components.
@@ -228,5 +244,9 @@ double acos_( double arg );
  * \return Arc sine of the argument
  **/
 double asin_( double arg );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

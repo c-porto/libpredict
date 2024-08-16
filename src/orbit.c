@@ -1,184 +1,176 @@
 #include <math.h>
+#include <stddef.h>
+#include <stdlib.h>
 #include <string.h>
 
-#include "defs.h"
-#include "sdp4.h"
-#include "sgp4.h"
-#include "sun.h"
-#include "unsorted.h"
-
-/* Static Allocated orbital elements */
-static predict_orbital_elements_t elem;
+#include <predict/defs.h>
+#include <predict/sdp4.h>
+#include <predict/sgp4.h>
+#include <predict/sun.h>
+#include <predict/unsorted.h>
 
 bool is_eclipsed( const double pos[ 3 ],
                   const double sol[ 3 ],
                   double * depth );
+
 bool predict_decayed( const predict_orbital_elements_t * orbital_elements,
                       predict_julian_date_t time );
 
 // length of buffer used for extracting subsets of TLE strings for parsing
 #define SUBSTRING_BUFFER_LENGTH 50
 
-predict_orbital_elements_t * predict_parse_tle( const char * tle_line_1,
-                                                const char * tle_line_2 )
+predict_orbital_elements_t * predict_parse_tle(
+    predict_orbital_elements_t * orbital_elements,
+    struct predict_sgp4 * sgp4,
+    struct predict_sdp4 * sdp4,
+    const char * tle_line_1,
+    const char * tle_line_2 )
 {
     double tempnum;
-    predict_orbital_elements_t * m = &elem;
+    predict_orbital_elements_t * m = NULL;
 
-    char substring_buffer[ SUBSTRING_BUFFER_LENGTH ];
-    m->satellite_number = atol( SubString( tle_line_1,
-                                           SUBSTRING_BUFFER_LENGTH,
-                                           substring_buffer,
-                                           2,
-                                           6 ) );
-    m->element_number = atol( SubString( tle_line_1,
-                                         SUBSTRING_BUFFER_LENGTH,
-                                         substring_buffer,
-                                         64,
-                                         67 ) );
-    m->epoch_year = atoi( SubString( tle_line_1,
-                                     SUBSTRING_BUFFER_LENGTH,
-                                     substring_buffer,
-                                     18,
-                                     19 ) );
-    strncpy( m->designator,
-             SubString( tle_line_1,
-                        SUBSTRING_BUFFER_LENGTH,
-                        substring_buffer,
-                        9,
-                        16 ),
-             8 );
-    m->epoch_day = atof( SubString( tle_line_1,
-                                    SUBSTRING_BUFFER_LENGTH,
-                                    substring_buffer,
-                                    20,
-                                    31 ) );
-    m->inclination = atof( SubString( tle_line_2,
-                                      SUBSTRING_BUFFER_LENGTH,
-                                      substring_buffer,
-                                      8,
-                                      15 ) );
-    m->right_ascension = atof( SubString( tle_line_2,
-                                          SUBSTRING_BUFFER_LENGTH,
-                                          substring_buffer,
-                                          17,
-                                          24 ) );
-    m->eccentricity = 1.0e-07 * atof( SubString( tle_line_2,
-                                                 SUBSTRING_BUFFER_LENGTH,
-                                                 substring_buffer,
-                                                 26,
-                                                 32 ) );
-    m->argument_of_perigee = atof( SubString( tle_line_2,
-                                              SUBSTRING_BUFFER_LENGTH,
-                                              substring_buffer,
-                                              34,
-                                              41 ) );
-    m->mean_anomaly = atof( SubString( tle_line_2,
-                                       SUBSTRING_BUFFER_LENGTH,
-                                       substring_buffer,
-                                       43,
-                                       50 ) );
-    m->mean_motion = atof( SubString( tle_line_2,
-                                      SUBSTRING_BUFFER_LENGTH,
-                                      substring_buffer,
-                                      52,
-                                      62 ) );
-    m->derivative_mean_motion = atof( SubString( tle_line_1,
-                                                 SUBSTRING_BUFFER_LENGTH,
-                                                 substring_buffer,
-                                                 33,
-                                                 42 ) );
-    tempnum = 1.0e-5 * atof( SubString( tle_line_1,
-                                        SUBSTRING_BUFFER_LENGTH,
-                                        substring_buffer,
-                                        44,
-                                        49 ) );
-    m->second_derivative_mean_motion = tempnum /
-                                       pow( 10.0, ( tle_line_1[ 51 ] - '0' ) );
-    tempnum = 1.0e-5 * atof( SubString( tle_line_1,
-                                        SUBSTRING_BUFFER_LENGTH,
-                                        substring_buffer,
-                                        53,
-                                        58 ) );
-    m->bstar_drag_term = tempnum / pow( 10.0, ( tle_line_1[ 60 ] - '0' ) );
-    m->revolutions_at_epoch = atof( SubString( tle_line_2,
+    if( ( orbital_elements != NULL ) && ( tle_line_1 != NULL ) &&
+        ( tle_line_2 != NULL ) )
+    {
+        m = orbital_elements;
+
+        char substring_buffer[ SUBSTRING_BUFFER_LENGTH ];
+        m->satellite_number = atol( SubString( tle_line_1,
                                                SUBSTRING_BUFFER_LENGTH,
                                                substring_buffer,
-                                               63,
-                                               67 ) );
+                                               2,
+                                               6 ) );
+        m->element_number = atol( SubString( tle_line_1,
+                                             SUBSTRING_BUFFER_LENGTH,
+                                             substring_buffer,
+                                             64,
+                                             67 ) );
+        m->epoch_year = atoi( SubString( tle_line_1,
+                                         SUBSTRING_BUFFER_LENGTH,
+                                         substring_buffer,
+                                         18,
+                                         19 ) );
+        strncpy( m->designator,
+                 SubString( tle_line_1,
+                            SUBSTRING_BUFFER_LENGTH,
+                            substring_buffer,
+                            9,
+                            16 ),
+                 8 );
+        m->epoch_day = atof( SubString( tle_line_1,
+                                        SUBSTRING_BUFFER_LENGTH,
+                                        substring_buffer,
+                                        20,
+                                        31 ) );
+        m->inclination = atof( SubString( tle_line_2,
+                                          SUBSTRING_BUFFER_LENGTH,
+                                          substring_buffer,
+                                          8,
+                                          15 ) );
+        m->right_ascension = atof( SubString( tle_line_2,
+                                              SUBSTRING_BUFFER_LENGTH,
+                                              substring_buffer,
+                                              17,
+                                              24 ) );
+        m->eccentricity = 1.0e-07 * atof( SubString( tle_line_2,
+                                                     SUBSTRING_BUFFER_LENGTH,
+                                                     substring_buffer,
+                                                     26,
+                                                     32 ) );
+        m->argument_of_perigee = atof( SubString( tle_line_2,
+                                                  SUBSTRING_BUFFER_LENGTH,
+                                                  substring_buffer,
+                                                  34,
+                                                  41 ) );
+        m->mean_anomaly = atof( SubString( tle_line_2,
+                                           SUBSTRING_BUFFER_LENGTH,
+                                           substring_buffer,
+                                           43,
+                                           50 ) );
+        m->mean_motion = atof( SubString( tle_line_2,
+                                          SUBSTRING_BUFFER_LENGTH,
+                                          substring_buffer,
+                                          52,
+                                          62 ) );
+        m->derivative_mean_motion = atof( SubString( tle_line_1,
+                                                     SUBSTRING_BUFFER_LENGTH,
+                                                     substring_buffer,
+                                                     33,
+                                                     42 ) );
+        tempnum = 1.0e-5 * atof( SubString( tle_line_1,
+                                            SUBSTRING_BUFFER_LENGTH,
+                                            substring_buffer,
+                                            44,
+                                            49 ) );
+        m->second_derivative_mean_motion = tempnum /
+                                           pow( 10.0,
+                                                ( tle_line_1[ 51 ] - '0' ) );
+        tempnum = 1.0e-5 * atof( SubString( tle_line_1,
+                                            SUBSTRING_BUFFER_LENGTH,
+                                            substring_buffer,
+                                            53,
+                                            58 ) );
+        m->bstar_drag_term = tempnum / pow( 10.0, ( tle_line_1[ 60 ] - '0' ) );
+        m->revolutions_at_epoch = atof( SubString( tle_line_2,
+                                                   SUBSTRING_BUFFER_LENGTH,
+                                                   substring_buffer,
+                                                   63,
+                                                   67 ) );
 
-    /* Period > 225 minutes is deep space */
-    double ao, xnodp, dd1, dd2, delo, a1, del1, r1;
-    double temp = TWO_PI / MINUTES_PER_DAY / MINUTES_PER_DAY;
-    double xno = m->mean_motion * temp * MINUTES_PER_DAY; // from old TLE struct
-    dd1 = ( XKE / xno );
-    dd2 = TWO_THIRD;
-    a1 = pow( dd1, dd2 );
-    r1 = cos( m->inclination * M_PI / 180.0 );
-    dd1 = ( 1.0 - m->eccentricity * m->eccentricity );
-    temp = CK2 * 1.5f * ( r1 * r1 * 3.0 - 1.0 ) / pow( dd1, 1.5 );
-    del1 = temp / ( a1 * a1 );
-    ao = a1 * ( 1.0 - del1 * ( TWO_THIRD * .5 +
-                               del1 * ( del1 * 1.654320987654321 + 1.0 ) ) );
-    delo = temp / ( ao * ao );
-    xnodp = xno / ( delo + 1.0 );
+        /* Period > 225 minutes is deep space */
+        double ao, xnodp, dd1, dd2, delo, a1, del1, r1;
+        double temp = TWO_PI / MINUTES_PER_DAY / MINUTES_PER_DAY;
+        double xno = m->mean_motion * temp *
+                     MINUTES_PER_DAY; // from old TLE struct
+        dd1 = ( XKE / xno );
+        dd2 = TWO_THIRD;
+        a1 = pow( dd1, dd2 );
+        r1 = cos( m->inclination * M_PI / 180.0 );
+        dd1 = ( 1.0 - m->eccentricity * m->eccentricity );
+        temp = CK2 * 1.5f * ( r1 * r1 * 3.0 - 1.0 ) / pow( dd1, 1.5 );
+        del1 = temp / ( a1 * a1 );
+        ao = a1 *
+             ( 1.0 - del1 * ( TWO_THIRD * .5 +
+                              del1 * ( del1 * 1.654320987654321 + 1.0 ) ) );
+        delo = temp / ( ao * ao );
+        xnodp = xno / ( delo + 1.0 );
 
-    /* Select a deep-space/near-earth ephemeris */
-    if( TWO_PI / xnodp / MINUTES_PER_DAY >= 0.15625 )
-    {
-        m->ephemeris = EPHEMERIS_SDP4;
-
-        // Get ptr to static allocated _sdp4
-        m->ephemeris_data = sdp4_static_alloc();
-
-        if( m->ephemeris_data == NULL )
+        /* Select a deep-space/near-earth ephemeris */
+        if( TWO_PI / xnodp / MINUTES_PER_DAY >= 0.15625 )
         {
-            predict_destroy_orbital_elements( m );
-            return NULL;
+            m->ephemeris = EPHEMERIS_SDP4;
+
+            m->ephemeris_data = sdp4;
+
+            if( m->ephemeris_data == NULL )
+            {
+                m = NULL;
+            }
+            else
+            {
+                // Initialize ephemeris data structure
+                sdp4_init( m, ( struct predict_sdp4 * ) m->ephemeris_data );
+            }
         }
-        // Initialize ephemeris data structure
-        sdp4_init( m, ( struct _sdp4 * ) m->ephemeris_data );
-    }
-    else
-    {
-        m->ephemeris = EPHEMERIS_SGP4;
-
-        // Get ptr to static allocated _sgp4
-        m->ephemeris_data = sgp4_static_alloc();
-
-        if( m->ephemeris_data == NULL )
+        else
         {
-            predict_destroy_orbital_elements( m );
-            return NULL;
+            m->ephemeris = EPHEMERIS_SGP4;
+
+            m->ephemeris_data = sgp4;
+
+            if( m->ephemeris_data == NULL )
+            {
+                m = NULL;
+            }
+            else
+            {
+                // Initialize ephemeris data structure
+                sgp4_init( m, ( struct predict_sgp4 * ) m->ephemeris_data );
+            }
         }
-        // Initialize ephemeris data structure
-        sgp4_init( m, ( struct _sgp4 * ) m->ephemeris_data );
     }
 
     return m;
-}
-
-void predict_destroy_orbital_elements( predict_orbital_elements_t * m )
-{
-    if( m == NULL )
-        return;
-
-    if( m->ephemeris_data != NULL )
-    {
-        switch( m->ephemeris )
-        {
-            case EPHEMERIS_SDP4:
-                memset( m->ephemeris_data, 0, sizeof( struct _sdp4 ) );
-                break;
-            case EPHEMERIS_SGP4:
-                memset( m->ephemeris_data, 0, sizeof( struct _sgp4 ) );
-                break;
-            default:
-                break;
-        }
-    }
-
-    memset( ( void * ) m, 0, sizeof( predict_orbital_elements_t ) );
 }
 
 bool predict_is_geosynchronous( const predict_orbital_elements_t * m )
@@ -273,17 +265,12 @@ int predict_orbit( const predict_orbital_elements_t * orbital_elements,
     switch( orbital_elements->ephemeris )
     {
         case EPHEMERIS_SDP4:
-            sdp4_predict( ( struct _sdp4 * ) orbital_elements->ephemeris_data,
-                          tsince,
-                          &output );
+            sdp4_predict( orbital_elements->ephemeris_data, tsince, &output );
             break;
         case EPHEMERIS_SGP4:
-            sgp4_predict( ( struct _sgp4 * ) orbital_elements->ephemeris_data,
-                          tsince,
-                          &output );
+            sgp4_predict( orbital_elements->ephemeris_data, tsince, &output );
             break;
         default:
-            // Panic!
             return -1;
     }
     m->position[ 0 ] = output.pos[ 0 ];

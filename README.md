@@ -3,6 +3,10 @@ libpredict
 
 A satellite orbit prediction library.
 
+Disclaimer
+--------
+
+This is a fork of la1k/libpredict and is inspired by philcrump's fork of the same library.
 
 Building
 --------

@@ -1,5 +1,5 @@
-#ifndef _PREDICT_H_
-#define _PREDICT_H_
+#ifndef PREDICT_H_
+#define PREDICT_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -13,6 +13,227 @@ extern "C" {
 #define PREDICT_VERSION_PATCH  0
 #define PREDICT_VERSION        20000
 #define PREDICT_VERSION_STRING "v2.0.0"
+
+struct model_output
+{
+    double xinck;  // inclination?
+    double omgadf; // argument of perigee?
+    double xnodek; // RAAN?
+
+    double pos[ 3 ];
+    double vel[ 3 ];
+
+    double phase;
+};
+
+/**
+ * Parameters for deep space perturbations
+ **/
+typedef struct
+{
+    /* Used by dpinit part of Deep() */
+    double eosq;
+    double sinio;
+    double cosio;
+    double betao;
+    double aodp;
+    double theta2;
+    double sing;
+    double cosg;
+    double betao2;
+    double xmdot;
+    double omgdot;
+    double xnodot;
+    double xnodp;
+
+    /* Used by thetg and Deep() */
+    double ds50;
+} deep_arg_fixed_t;
+
+/**
+ * Output from deep space perturbations.
+ **/
+typedef struct
+{
+    /* Moved from deep_arg_t. */
+    /* Used by dpsec and dpper parts of Deep() */
+    double xll;
+    double omgadf;
+    double xnode;
+    double em;
+    double xinc;
+    double xn;
+    double t;
+
+    /* Previously a part of _sdp4, moved here. */
+    double pl;
+    double pinc;
+    double pe;
+    double sh1;
+    double sghl;
+    double shs;
+    double savtsn;
+    double atime;
+    double xni;
+    double xli;
+    double sghs;
+    /// Do loop flag:
+    int loopFlag;
+    /// Epoch restart flag:
+    int epochRestartFlag;
+} deep_arg_dynamic_t;
+
+/**
+ * Parameters relevant for SDP4 (simplified deep space perturbations) orbital
+ *model.
+ **/
+struct predict_sdp4
+{
+    /// Lunar terms done?
+    int lunarTermsDone;
+    /// Resonance flag:
+    int resonanceFlag;
+    /// Synchronous flag:
+    int synchronousFlag;
+
+    /// Static variables from SDP4():
+    double x3thm1;
+    double c1;
+    double x1mth2;
+    double c4;
+    double xnodcf;
+    double t2cof;
+    double xlcof;
+    double aycof;
+    double x7thm1;
+    deep_arg_fixed_t deep_arg;
+
+    /// Static variables from Deep():
+    double thgr;
+    double xnq;
+    double xqncl;
+    double omegaq;
+    double zmol;
+    double zmos;
+    double ee2;
+    double e3;
+    double xi2;
+    double xl2;
+    double xl3;
+    double xl4;
+    double xgh2;
+    double xgh3;
+    double xgh4;
+    double xh2;
+    double xh3;
+    double sse;
+    double ssi;
+    double ssg;
+    double xi3;
+    double se2;
+    double si2;
+    double sl2;
+    double sgh2;
+    double sh2;
+    double se3;
+    double si3;
+    double sl3;
+    double sgh3;
+    double sh3;
+    double sl4;
+    double sgh4;
+    double ssl;
+    double ssh;
+    double d3210;
+    double d3222;
+    double d4410;
+    double d4422;
+    double d5220;
+    double d5232;
+    double d5421;
+    double d5433;
+    double del1;
+    double del2;
+    double del3;
+    double fasx2;
+    double fasx4;
+    double fasx6;
+    double xlamo;
+    double xfact;
+    double stepp;
+    double stepn;
+    double step2;
+    double preep;
+    double d2201;
+    double d2211;
+    double zsingl;
+    double zcosgl;
+    double zsinhl;
+    double zcoshl;
+    double zsinil;
+    double zcosil;
+
+    // converted fields from predict_orbital_elements_t.
+    double xnodeo;
+    double omegao;
+    double xmo;
+    double xincl;
+    double eo;
+    double xno;
+    double bstar;
+    double epoch;
+};
+
+/**
+ * Parameters relevant for SGP4 (simplified general perturbations) orbital
+ *model.
+ **/
+struct predict_sgp4
+{
+    /// Simple flag
+    int simpleFlag;
+
+    /// Static variables from original SGP4() (time-independent, and might
+    /// probably have physical meaningfulness)
+    double aodp;
+    double aycof;
+    double c1;
+    double c4;
+    double c5;
+    double cosio;
+    double d2;
+    double d3;
+    double d4;
+    double delmo;
+    double omgcof;
+    double eta;
+    double omgdot;
+    double sinio;
+    double xnodp;
+    double sinmo;
+    double t2cof;
+    double t3cof;
+    double t4cof;
+    double t5cof;
+    double x1mth2;
+    double x3thm1;
+    double x7thm1;
+    double xmcof;
+    double xmdot;
+    double xnodcf;
+    double xnodot;
+    double xlcof;
+
+    // tle fields copied (and converted) from predict_orbital_t. The fields
+    // above are TLE-dependent anyway, and interrelated with the values below.
+    double bstar;
+    double xincl;
+    double xnodeo;
+    double eo;
+    double omegao;
+    double xmo;
+    double xno;
+};
 
 /**
  * Get the major version number of the library
@@ -128,13 +349,19 @@ typedef struct
 /**
  * Create predict_orbital_elements_t from TLE strings.
  *
- * \param tle_line_1 First line of NORAD two-line element set string
- * \param tle_line_2 Second line of NORAD two-line element set string
- * \return Processed TLE parameters
- * \copyright GPLv2+
+ * \param elements   Pointer to a static allocated predict_orbital_elements_t
+ *struct. \param sgp4       Pointer to a static allocated sgp4 struct. \param
+ *sdp4       Pointer to a static allocated sdp4 struct. \param tle_line_1 First
+ *line of NORAD two-line element set string \param tle_line_2 Second line of
+ *NORAD two-line element set string \return Processed TLE parameters \copyright
+ *GPLv2+
  **/
-predict_orbital_elements_t * predict_parse_tle( const char * tle_line_1,
-                                                const char * tle_line_2 );
+predict_orbital_elements_t * predict_parse_tle(
+    predict_orbital_elements_t * orbital_elements,
+    struct predict_sgp4 * sgp4,
+    struct predict_sdp4 * sdp4,
+    const char * tle_line_1,
+    const char * tle_line_2 );
 
 /**
  * Reset memory allocated in orbital elements structure.
@@ -282,7 +509,9 @@ struct predict_observation
     /// Range (km)
     double range;
     /// Range vector
-    double range_x, range_y, range_z;
+    double range_x;
+    double range_y;
+    double range_z;
     /// Range velocity (km/s)
     double range_rate;
     /// Visibility status, whether satellite can be seen by optical means.
@@ -296,13 +525,15 @@ struct predict_observation
 /**
  * Create observation point (QTH).
  *
+ * \param observer Pointer to a static allocated predict_observer_t struct.
  * \param name Name of observation point
  * \param lat Latitude in radians (easting/northing)
  * \param lon Longitude in radians (easting/northing)
  * \param alt Altitude in meters
  * \return Allocated observation point
  **/
-predict_observer_t * predict_create_observer( const char * name,
+predict_observer_t * predict_create_observer( predict_observer_t * observer,
+                                              const char * name,
                                               double lat,
                                               double lon,
                                               double alt );

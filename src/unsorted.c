@@ -1,8 +1,7 @@
 #include <stdint.h>
 
-#include "unsorted.h"
-
-#include "defs.h"
+#include <predict/defs.h>
+#include <predict/unsorted.h>
 
 void vec3_set( double v[ 3 ], double x, double y, double z )
 {
@@ -139,7 +138,8 @@ double ThetaG_JD( double jd )
     TU = ( j - 2451545.0 ) / 36525.0;
     GMST = 24110.54841 + ( TU * ( 8640184.812866 +
                                   ( TU * ( 0.093104 - ( TU * 6.2E-6 ) ) ) ) );
-    GMST = fmod( GMST + (SECONDS_PER_DAY * EARTH_ROTATIONS_PER_SIDERIAL_DAY * UT),
+    GMST = fmod( GMST + ( SECONDS_PER_DAY * EARTH_ROTATIONS_PER_SIDERIAL_DAY *
+                          UT ),
                  SECONDS_PER_DAY );
 
     return ( 2 * M_PI * GMST / SECONDS_PER_DAY );
@@ -240,24 +240,17 @@ void Calculate_LatLonAlt( double time,
     {
         phi = geodetic->lat;
         c = 1.0 / sqrt( 1.0 - ( e2 * Sqr( sin( phi ) ) ) );
-        geodetic->lat = atan2( pos[ 2 ] +
-                                   (EARTH_RADIUS_KM_WGS84 * c * e2 * sin( phi )),
+        geodetic->lat = atan2( pos[ 2 ] + ( EARTH_RADIUS_KM_WGS84 * c * e2 *
+                                            sin( phi ) ),
                                r );
 
     } while( fabs( geodetic->lat - phi ) >= 1E-10 );
 
     geodetic->alt = r / cos( geodetic->lat ) -
-                    (EARTH_RADIUS_KM_WGS84 * c); /* kilometers */
+                    ( EARTH_RADIUS_KM_WGS84 * c ); /* kilometers */
 
-    if( geodetic->lat > PI_HALF )
-    {
-        geodetic->lat -= ( double ) 2 * M_PI;
-    }
-
-    if( geodetic->lon > M_PI )
-    {
-        geodetic->lat -= ( double ) 2 * M_PI;
-    }
+    unsortedFIX_ANGLE( geodetic->lat, PI_HALF );
+    unsortedFIX_ANGLE( geodetic->lon, M_PI );
 }
 
 void Calculate_Obs( double time,

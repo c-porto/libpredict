@@ -1,9 +1,10 @@
-#include "defs.h"
-#include "sun.h"
-#include "unsorted.h"
-#include <predict/predict.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include <predict/defs.h>
+#include <predict/predict.h>
+#include <predict/sun.h>
+#include <predict/unsorted.h>
 
 /**
  * This function reduces angles greater than two pi by subtracting two pi

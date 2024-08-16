@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <time.h>
 
-#include "defs.h"
+#include <predict/defs.h>
 
 /**
  * Create time_t in UTC from struct tm.

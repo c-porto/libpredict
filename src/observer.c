@@ -1,12 +1,10 @@
-#include "defs.h"
-#include "sun.h"
-#include "unsorted.h"
-#include <predict/predict.h>
 #include <stdlib.h>
 #include <string.h>
 
-/* Static Allocated observer */
-static predict_observer_t observer;
+#include <predict/defs.h>
+#include <predict/predict.h>
+#include <predict/sun.h>
+#include <predict/unsorted.h>
 
 void observer_calculate( const predict_observer_t * observer,
                          double time,
@@ -14,28 +12,24 @@ void observer_calculate( const predict_observer_t * observer,
                          const double vel[ 3 ],
                          struct predict_observation * result );
 
-predict_observer_t * predict_create_observer( const char * name,
+predict_observer_t * predict_create_observer( predict_observer_t * observer,
+                                              const char * name,
                                               double lat,
                                               double lon,
                                               double alt )
 {
-    predict_observer_t * obs = &observer;
+    predict_observer_t * obs = observer;
 
-    strncpy( obs->name, name, 128 );
-    obs->name[ 127 ] = '\0';
-    obs->latitude = lat;
-    obs->longitude = lon;
-    obs->altitude = alt;
+    if( obs != NULL )
+    {
+        strncpy( obs->name, name, 128 );
+        obs->name[ 127 ] = '\0';
+        obs->latitude = lat;
+        obs->longitude = lon;
+        obs->altitude = alt;
+    }
 
     return obs;
-}
-
-void predict_destroy_observer( predict_observer_t * obs )
-{
-    if( obs == &observer )
-    {
-        memset( ( void * ) obs, 0, sizeof( predict_observer_t ) );
-    }
 }
 
 /**

@@ -1,6 +1,6 @@
-#include "sun.h"
-#include "defs.h"
-#include "unsorted.h"
+#include <predict/defs.h>
+#include <predict/sun.h>
+#include <predict/unsorted.h>
 
 /**
  * The function Delta_ET has been added to allow calculations on the position of
@@ -12,7 +12,7 @@
  *
  * \copyright GPLv2+
  **/
-double Delta_ET( double year )
+static double Delta_ET( double year )
 {
     double delta_et;
 
