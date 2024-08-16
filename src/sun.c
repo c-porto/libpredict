@@ -17,39 +17,43 @@ static double Delta_ET( double year )
 {
     double delta_et;
 
-    delta_et = 26.465 + 0.747622 * ( year - 1950 ) +
-               1.886913 * sin( 2 * M_PI * ( year - 1975 ) / 33 );
+    delta_et = 26.465 + ( 0.747622 * ( year - 1950.0 ) ) +
+               ( 1.886913 * sin( 2.0 * M_PI * ( year - 1975.0 ) / 33.0 ) );
 
     return delta_et;
 }
+
 void sun_predict( double time, double position[ 3 ] )
 {
     double jul_utc = time;
     double mjd = jul_utc - 2415020.0;
-    double year = 1900 + mjd / 365.25;
-    double T = ( mjd + Delta_ET( year ) / SECONDS_PER_DAY ) / 36525.0;
+    double year = 1900.0 + ( mjd / 365.25 );
+    double T = ( mjd + ( Delta_ET( year ) / SECONDS_PER_DAY ) ) / 36525.0;
     double M = unsortedDEGREES_TO_RADIANS(
         fmod( 358.47583 + fmod( 35999.04975 * T, 360.0 ) -
-                  ( 0.000150 + 0.0000033 * T ) * Sqr( T ),
+                  ( 0.000150 + ( 0.0000033 * T ) ) * Sqr( T ),
               360.0 ) );
     double L = unsortedDEGREES_TO_RADIANS(
-        fmod( 279.69668 + fmod( 36000.76892 * T, 360.0 ) + 0.0003025 * Sqr( T ),
+        fmod( 279.69668 + fmod( 36000.76892 * T, 360.0 ) +
+                  ( 0.0003025 * Sqr( T ) ),
               360.0 ) );
-    double e = 0.01675104 - ( 0.0000418 + 0.000000126 * T ) * T;
+    double e = 0.01675104 - ( ( 0.0000418 + ( 0.000000126 * T ) ) * T );
     double C = unsortedDEGREES_TO_RADIANS(
-        ( 1.919460 - ( 0.004789 + 0.000014 * T ) * T ) * sin( M ) +
-        ( 0.020094 - 0.000100 * T ) * sin( 2 * M ) + 0.000293 * sin( 3 * M ) );
+        ( ( 1.919460 - ( ( 0.004789 + ( 0.000014 * T ) ) * T ) ) * sin( M ) ) +
+        ( ( 0.020094 - ( 0.000100 * T ) ) * sin( 2.0 * M ) ) +
+        ( 0.000293 * sin( 3.0 * M ) ) );
     double O = unsortedDEGREES_TO_RADIANS(
-        fmod( 259.18 - 1934.142 * T, 360.0 ) );
+        fmod( 259.18 - ( 1934.142 * T ), 360.0 ) );
     double Lsa = fmod( L + C -
                            unsortedDEGREES_TO_RADIANS( 0.00569 -
-                                                       0.00479 * sin( O ) ),
+                                                       ( 0.00479 * sin( O ) ) ),
                        2 * M_PI );
     double nu = fmod( M + C, 2 * M_PI );
-    double R = 1.0000002 * ( 1.0 - Sqr( e ) ) / ( 1.0 + e * cos( nu ) );
+    double R = 1.0000002 * ( 1.0 - Sqr( e ) ) / ( 1.0 + ( e * cos( nu ) ) );
     double eps = unsortedDEGREES_TO_RADIANS(
-        23.452294 - ( 0.0130125 + ( 0.00000164 - 0.000000503 * T ) * T ) * T +
-        0.00256 * cos( O ) );
+        23.452294 -
+        ( ( 0.0130125 + ( 0.00000164 - ( 0.000000503 * T ) ) * T ) * T ) +
+        ( 0.00256 * cos( O ) ) );
     R = ASTRONOMICAL_UNIT_KM * R;
 
     position[ 0 ] = R * cos( Lsa );
@@ -132,14 +136,16 @@ static void predict_sun_ra_dec( predict_julian_date_t time,
 
 double predict_sun_ra( predict_julian_date_t time )
 {
-    double ra, dec;
+    double ra;
+    double dec;
     predict_sun_ra_dec( time, &ra, &dec );
     return ra;
 }
 
 double predict_sun_declination( predict_julian_date_t time )
 {
-    double ra, dec;
+    double ra;
+    double dec;
     predict_sun_ra_dec( time, &ra, &dec );
     return dec;
 }
