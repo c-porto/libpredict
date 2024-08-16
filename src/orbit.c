@@ -270,7 +270,7 @@ int32_t predict_orbit( const predict_orbital_elements_t * orbital_elements,
     vec3_set( m->velocity, 0, 0, 0 );
 
     m->time = utc;
-    double julTime = utc + JULIAN_TIME_DIFF;
+    double julTime = utc;
 
     /* Convert satellite's epoch time to Julian  */
     /* and calculate time since epoch in minutes */

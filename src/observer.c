@@ -45,7 +45,7 @@ void predict_observe_orbit( const predict_observer_t * observer,
     if( obs == NULL )
         return;
 
-    double julTime = orbit->time + JULIAN_TIME_DIFF;
+    double julTime = orbit->time;
 
     observer_calculate( observer,
                         julTime,

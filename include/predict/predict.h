@@ -9,12 +9,6 @@ extern "C" {
 #include <stdbool.h>
 #include <time.h>
 
-#define PREDICT_VERSION_MAJOR  2
-#define PREDICT_VERSION_MINOR  0
-#define PREDICT_VERSION_PATCH  0
-#define PREDICT_VERSION        20000
-#define PREDICT_VERSION_STRING "v2.0.0"
-
 struct model_output
 {
     double xinck;  // inclination?
@@ -243,20 +237,36 @@ struct predict_sgp4
 typedef double predict_julian_date_t;
 
 /**
- * Convert time_t in UTC to Julian date in UTC.
+ * Convert Unix timestamp to Julian. (Both in UTC)
  *
  * \param time Time in UTC
  * \return Julian day in UTC
  **/
-predict_julian_date_t predict_to_julian( time_t time );
+predict_julian_date_t julian_from_timestamp(uint64_t time);
 
 /**
- * Convert Julian date in UTC back to a time_t in UTC.
+ * Convert Unix timestamp in ms to Julian. (Both in UTC)
  *
- * \param date Julian date in UTC
- * \return Time in UTC
+ * \param time Time, millisecond resolution, in UTC
+ * \return Julian day in UTC
  **/
-time_t predict_from_julian( predict_julian_date_t date );
+predict_julian_date_t julian_from_timestamp_ms(uint64_t time_ms);
+
+/**
+ * Convert Julian time to Unix timestamp. (Both in UTC)
+ *
+ * \param Julian day in UTC
+ * \return time Time in UTC
+ **/
+uint64_t timestamp_from_julian(predict_julian_date_t date);
+
+/**
+ * Convert Julian time to Unix timestamp. (Both in UTC)
+ *
+ * \param Julian day in UTC
+ * \return time Time, millisecond resolution, in UTC
+ **/
+uint64_t timestamp_ms_from_julian(predict_julian_date_t date);
 
 /**
  * Simplified perturbation models used in modeling the satellite orbits.

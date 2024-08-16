@@ -1,4 +1,5 @@
 #include <predict/defs.h>
+#include <predict/predict.h>
 #include <predict/sun.h>
 #include <predict/unsorted.h>
 
@@ -21,51 +22,32 @@ static double Delta_ET( double year )
 
     return delta_et;
 }
-
-/**
- * Returns angle in radians from argument in degrees.
- *
- * \copyright GPLv2+
- **/
-double Radians( double arg )
-{
-    /* Returns angle in radians from argument in degrees */
-    return ( arg * M_PI / 180.0 );
-}
-
-/**
- * Returns angle in degrees from argument in radians.
- *
- * \copyright GPLv2+
- **/
-double Degrees( double arg )
-{
-    /* Returns angle in degrees from argument in radians */
-    return ( arg * 180.0 / M_PI );
-}
-
 void sun_predict( double time, double position[ 3 ] )
 {
-    double jul_utc = time + JULIAN_TIME_DIFF;
+    double jul_utc = time;
     double mjd = jul_utc - 2415020.0;
     double year = 1900 + mjd / 365.25;
     double T = ( mjd + Delta_ET( year ) / SECONDS_PER_DAY ) / 36525.0;
-    double M = Radians( fmod( 358.47583 + fmod( 35999.04975 * T, 360.0 ) -
-                                  ( 0.000150 + 0.0000033 * T ) * Sqr( T ),
-                              360.0 ) );
-    double L = Radians(
+    double M = unsortedDEGREES_TO_RADIANS(
+        fmod( 358.47583 + fmod( 35999.04975 * T, 360.0 ) -
+                  ( 0.000150 + 0.0000033 * T ) * Sqr( T ),
+              360.0 ) );
+    double L = unsortedDEGREES_TO_RADIANS(
         fmod( 279.69668 + fmod( 36000.76892 * T, 360.0 ) + 0.0003025 * Sqr( T ),
               360.0 ) );
     double e = 0.01675104 - ( 0.0000418 + 0.000000126 * T ) * T;
-    double C = Radians(
+    double C = unsortedDEGREES_TO_RADIANS(
         ( 1.919460 - ( 0.004789 + 0.000014 * T ) * T ) * sin( M ) +
         ( 0.020094 - 0.000100 * T ) * sin( 2 * M ) + 0.000293 * sin( 3 * M ) );
-    double O = Radians( fmod( 259.18 - 1934.142 * T, 360.0 ) );
-    double Lsa = fmod( L + C - Radians( 0.00569 - 0.00479 * sin( O ) ),
+    double O = unsortedDEGREES_TO_RADIANS(
+        fmod( 259.18 - 1934.142 * T, 360.0 ) );
+    double Lsa = fmod( L + C -
+                           unsortedDEGREES_TO_RADIANS( 0.00569 -
+                                                       0.00479 * sin( O ) ),
                        2 * M_PI );
     double nu = fmod( M + C, 2 * M_PI );
     double R = 1.0000002 * ( 1.0 - Sqr( e ) ) / ( 1.0 + e * cos( nu ) );
-    double eps = Radians(
+    double eps = unsortedDEGREES_TO_RADIANS(
         23.452294 - ( 0.0130125 + ( 0.00000164 - 0.000000503 * T ) * T ) * T +
         0.00256 * cos( O ) );
     R = ASTRONOMICAL_UNIT_KM * R;
@@ -95,7 +77,7 @@ void predict_observe_sun( const predict_observer_t * observer,
     geodetic.alt = observer->altitude / 1000.0;
     geodetic.theta = 0.0;
 
-    double jul_utc = time + JULIAN_TIME_DIFF;
+    double jul_utc = time;
     Calculate_Obs( jul_utc, solar_vector, zero_vector, &geodetic, &solar_set );
 
     double sun_azi = solar_set.x;
@@ -120,14 +102,16 @@ void predict_observe_sun( const predict_observer_t * observer,
  * \param dec Declination
  * \copyright GPLv2+
  **/
-void predict_sun_ra_dec( predict_julian_date_t time, double * ra, double * dec )
+static void predict_sun_ra_dec( predict_julian_date_t time,
+                                double * ra,
+                                double * dec )
 {
     // predict absolute position of the sun
     double solar_vector[ 3 ];
     sun_predict( time, solar_vector );
 
     // prepare for radec calculation
-    double jul_utc = time + JULIAN_TIME_DIFF;
+    double jul_utc = time;
     double zero_vector[ 3 ] = { 0, 0, 0 };
     vector_t solar_rad;
 
@@ -171,6 +155,6 @@ double predict_sun_gha( predict_julian_date_t time )
     Calculate_LatLonAlt( time, solar_vector, &solar_latlonalt );
 
     // return longitude as the GHA
-    double sun_lon = 360.0 - Degrees( solar_latlonalt.lon );
+    double sun_lon = 360.0 - unsortedRADIANS_TO_DEGREES( solar_latlonalt.lon );
     return sun_lon * M_PI / 180.0;
 }

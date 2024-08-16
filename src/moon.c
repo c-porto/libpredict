@@ -7,31 +7,6 @@
 #include <predict/unsorted.h>
 
 /**
- * This function reduces angles greater than two pi by subtracting two pi
- * from the angle
- *
- * \copyright GPLv2+
- **/
-double FixAngle( double x )
-{
-    while( x > 2 * M_PI )
-        x -= 2 * M_PI;
-
-    return x;
-}
-
-/**
- * This function is used in the FindMoon() function.
- *
- * \copyright GPLv2+
- **/
-double PrimeAngle( double x )
-{
-    x = x - 360.0 * floor( x / 360.0 );
-    return x;
-}
-
-/**
  * Output struct for predict_moon().
  **/
 struct moon
@@ -57,12 +32,12 @@ struct moon
  * \param moon Output struct
  * \copyright GPLv2+
  **/
-void predict_moon( double time, struct moon * moon )
+static void predict_moon( double time, struct moon * moon )
 {
     double jd, t, t2, t3, l1, m, teg, l, b, w1, w2, bt, p, lm, m1, d, ff, om,
         ss, ex;
 
-    jd = time + JULIAN_TIME_DIFF;
+    jd = time;
     moon->jd = jd;
 
     t = ( jd - 2415020.0 ) / 36525.0;
@@ -92,12 +67,12 @@ void predict_moon( double time, struct moon * moon )
     ex = 1.0 - 0.002495 * t - 0.00000752 * t2;
     om = om * M_PI / 180.0;
 
-    l1 = PrimeAngle( l1 );
-    m = PrimeAngle( m );
-    m1 = PrimeAngle( m1 );
-    d = PrimeAngle( d );
-    ff = PrimeAngle( ff );
-    om = PrimeAngle( om );
+    l1 = unsortedPRIME_ANGLE( l1 );
+    m = unsortedPRIME_ANGLE( m );
+    m1 = unsortedPRIME_ANGLE( m1 );
+    d = unsortedPRIME_ANGLE( d );
+    ff = unsortedPRIME_ANGLE( ff );
+    om = unsortedPRIME_ANGLE( om );
 
     m = m * M_PI / 180.0;
     m1 = m1 * M_PI / 180.0;
@@ -267,7 +242,7 @@ void predict_moon( double time, struct moon * moon )
  * \param dec Declination
  * \copyright GPLv2+
  **/
-void predict_moon_ra_dec( predict_julian_date_t time,
+static void predict_moon_ra_dec( predict_julian_date_t time,
                           double * ra,
                           double * dec )
 {

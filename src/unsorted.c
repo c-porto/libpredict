@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <stddef.h>
 
 #include <predict/defs.h>
 #include <predict/unsorted.h>
@@ -226,9 +227,6 @@ void Calculate_LatLonAlt( double time,
     double c;
 
     double t = time;
-
-    // Convert to julian time:
-    t += JULIAN_TIME_DIFF;
 
     geodetic->theta = atan2( pos[ 1 ], pos[ 0 ] );              /* radians */
     geodetic->lon = FMod2p( geodetic->theta - ThetaG_JD( t ) ); /* radians */
