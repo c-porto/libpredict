@@ -3,31 +3,38 @@ SHARED_TARGET=libpredict.so
 
 LIB_PREDICT_VERSION = 1
 
-ifndef BUILD_DIR
-	BUILD_DIR = $(CURDIR)
-endif
+BUILD_DIR ?= $(CURDIR)
 
-ifndef INSTALL_DIR
-	INSTALL_DIR = /usr/lib/
-endif
+BUILD_DIR_ABS = $(abspath $(BUILD_DIR))
 
-AR = ar
-LD = ld
-AR_FLAGS = rcs
-LD_FLAGS = -shared -soname $(SHARED_TARGET).$(LIB_PREDICT_VERSION) -lc -lm
+INSTALL_DIR ?= /usr/lib/
+
+TOOLCHAIN_PREFIX ?= 
+AR_FLAGS_APPEND ?= 
+LD_FLAGS_APPEND ?= 
+CC_FLAGS_APPEND ?= 
+
+AR_FLAGS := rcs
+LD_FLAGS := -shared -soname $(SHARED_TARGET).$(LIB_PREDICT_VERSION) -lc -lm
+
+AR_FLAGS += $(AR_FLAGS_APPEND)
+LD_FLAGS += $(LD_FLAGS_APPEND)
+
+AR := $(TOOLCHAIN_PREFIX)ar
+LD := $(TOOLCHAIN_PREFIX)ld
 
 .PHONY: all
 all:
 	@echo "Compiling libpredict..."
-	$(MAKE) BUILD_DIR=$(BUILD_DIR) -C src
-	$(AR) $(AR_FLAGS) $(BUILD_DIR)/$(STATIC_TARGET) $(BUILD_DIR)/*.o
-	$(LD) $(LD_FLAGS) -o $(BUILD_DIR)/$(SHARED_TARGET) $(BUILD_DIR)/*.o
+	$(MAKE) -C src BUILD_DIR=$(BUILD_DIR_ABS) TOOLCHAIN_PREFIX=$(TOOLCHAIN_PREFIX) CC_FLAGS_APPEND="$(CC_FLAGS_APPEND)"
+	$(AR) $(AR_FLAGS) $(BUILD_DIR_ABS)/$(STATIC_TARGET) $(BUILD_DIR_ABS)/*.o
+	$(LD) $(LD_FLAGS) -o $(BUILD_DIR_ABS)/$(SHARED_TARGET) $(BUILD_DIR_ABS)/*.o
 
 .PHONY: install
 install:
 	@echo "Installing libpredict..."
-	cp -r $(BUILD_DIR)/$(SHARED_TARGET) $(INSTALL_DIR)
-	cp -r $(BUILD_DIR)/$(STATIC_TARGET) $(INSTALL_DIR)
+	cp -r $(BUILD_DIR_ABS)/$(SHARED_TARGET) $(INSTALL_DIR)
+	cp -r $(BUILD_DIR_ABS)/$(STATIC_TARGET) $(INSTALL_DIR)
 	cp -r include/predict /usr/include/
 
 .PHONY: uninstall
@@ -39,4 +46,4 @@ uninstall:
 
 .PHONY: clean
 clean:
-	rm $(BUILD_DIR)/*.o $(BUILD_DIR)/*.a $(BUILD_DIR)/*.so*
+	rm $(BUILD_DIR_ABS)/*.o $(BUILD_DIR_ABS)/*.a $(BUILD_DIR_ABS)/*.so*
