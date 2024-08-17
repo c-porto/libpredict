@@ -125,13 +125,13 @@ void sgp4_init( const predict_orbital_elements_t * orbital_elements,
     m->c4 = 2.0 * m->xnodp * coef1 * m->aodp * betao2 *
             ( ( m->eta * ( 2.0 + ( 0.5 * etasq ) ) ) +
               ( m->eo * ( 0.5 + ( 2.0 * etasq ) ) ) -
-              ( ( 2.0 * CK2 * tsi / ( m->aodp * psisq ) ) *
-                    ( -3.0 * m->x3thm1 *
-                      ( 1.0 - ( 2.0 * eeta ) +
-                        ( etasq * ( 1.5 - ( 0.5 * eeta ) ) ) ) ) +
-                ( 0.75 * m->x1mth2 *
-                  ( ( 2.0 * etasq ) - ( eeta * ( 1.0 + etasq ) ) ) *
-                  cos( 2.0 * m->omegao ) ) ) );
+              ( 2.0 * CK2 * tsi / ( m->aodp * psisq ) ) *
+                  ( -3.0 * m->x3thm1 *
+                        ( 1.0 - ( 2.0 * eeta ) +
+                          ( etasq * ( 1.5 - ( 0.5 * eeta ) ) ) ) +
+                    ( 0.75 * m->x1mth2 *
+                      ( ( 2.0 * etasq ) - ( eeta * ( 1.0 + etasq ) ) ) *
+                      cos( 2.0 * m->omegao ) ) ) );
     m->c5 = 2.0 * coef1 * m->aodp * betao2 *
             ( 1.0 + ( 2.75 * ( etasq + eeta ) ) + ( eeta * etasq ) );
 
@@ -148,9 +148,9 @@ void sgp4_init( const predict_orbital_elements_t * orbital_elements,
                   ( 7.0 - ( 114.0 * theta2 ) + ( 395.0 * theta4 ) ) ) +
                 ( temp3 * ( 3.0 - ( 36.0 * theta2 ) + ( 49.0 * theta4 ) ) );
     xhdot1 = -temp1 * m->cosio;
-    m->xnodot = xhdot1 +
-                ( ( 0.5 * temp2 * ( 4.0 - ( 19.0 * theta2 ) ) ) +
-                  ( ( 2.0 * temp3 * ( 3.0 - ( 7.0 * theta2 ) ) ) ) * m->cosio );
+    m->xnodot = xhdot1 + ( ( 0.5 * temp2 * ( 4.0 - ( 19.0 * theta2 ) ) +
+                             ( 2.0 * temp3 * ( 3.0 - ( 7.0 * theta2 ) ) ) ) *
+                           m->cosio );
     m->omgcof = m->bstar * c3 * cos( m->omegao );
     m->xmcof = -TWO_THIRD * coef * m->bstar * AE / eeta;
     m->xnodcf = 3.5 * betao2 * xhdot1 * m->c1;
