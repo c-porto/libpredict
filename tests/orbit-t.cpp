@@ -10,6 +10,11 @@
 #include <iostream>
 using namespace std;
 
+static predict_orbital_elements_t e;
+static predict_sdp4 d;
+static predict_sgp4 g;
+static predict_observer_t o;
+
 int runtest(const char *filename);
 
 int main(int argc, char **argv)
@@ -49,7 +54,7 @@ int runtest(const char *filename)
 	testcase.getTLE(tle);
 
 	// Create orbit objects
-	predict_orbital_elements_t *orbital_elements = predict_parse_tle(tle[0], tle[1]);
+	predict_orbital_elements_t *orbital_elements = predict_parse_tle(&e, &g, &d, tle[0], tle[1]);
 
 	// Used in lower bound in value check
 	struct predict_position orbit_lower;
@@ -58,7 +63,7 @@ int runtest(const char *filename)
 	struct predict_position orbit_upper;
 
 	// Create observer object
-	predict_observer_t *obs = predict_create_observer("test", testcase.latitude()*M_PI/180.0, testcase.longitude()*M_PI/180.0, testcase.altitude());
+	predict_observer_t *obs = predict_create_observer(&o,"test", testcase.latitude()*M_PI/180.0, testcase.longitude()*M_PI/180.0, testcase.altitude());
 	if (!obs) {
 		fprintf(stderr, "Failed to initialize observer!");
 		return -1;
@@ -109,11 +114,11 @@ int runtest(const char *filename)
 		struct predict_observation orbit_obs_upper;
 
 		// Lower bound
-		predict_orbit(orbital_elements, &orbit_lower, predict_to_julian(time));
+		predict_orbit(orbital_elements, &orbit_lower, julian_from_timestamp(time));
 		predict_observe_orbit(obs, &orbit_lower, &orbit_obs_lower);
 
 		// Upper bound
-		predict_orbit(orbital_elements, &orbit_upper, predict_to_julian(time + DIFF));
+		predict_orbit(orbital_elements, &orbit_upper, julian_from_timestamp(time + DIFF));
 		predict_observe_orbit(obs, &orbit_upper, &orbit_obs_upper);
 
 		// Check values

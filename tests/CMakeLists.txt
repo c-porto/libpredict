@@ -1,4 +1,5 @@
-link_directories(${LIBPREDICT_LIBRARY_DIR})
+link_directories(${CMAKE_SOURCE_DIR}/../)
+include_directories(${CMAKE_SOURCE_DIR}/../include/)
 
 add_executable(dummy-t dummy-t.c)
 add_test(NAME dummy COMMAND dummy-t)

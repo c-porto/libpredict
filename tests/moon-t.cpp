@@ -11,6 +11,8 @@
 #include <iostream>
 using namespace std;
 
+static predict_observer_t o;
+
 int runtest(const char *filename);
 
 int main(int argc, char **argv)
@@ -48,7 +50,7 @@ int runtest(const char *filename)
 	}
 
 	// Create observer object
-	predict_observer_t *obs = predict_create_observer("test", testcase.latitude()*M_PI/180.0, testcase.longitude()*M_PI/180.0, testcase.altitude());
+	predict_observer_t *obs = predict_create_observer(&o, "test", testcase.latitude()*M_PI/180.0, testcase.longitude()*M_PI/180.0, testcase.altitude());
 	if (!obs) {
 		fprintf(stderr, "Failed to initialize observer!");
 		return -1;
@@ -73,10 +75,10 @@ int runtest(const char *filename)
 		struct predict_observation moon_obs_upper;
 
 		// Lower bound
-		predict_observe_moon(obs, predict_to_julian(time), &moon_obs_lower);
+		predict_observe_moon(obs, julian_from_timestamp(time), &moon_obs_lower);
 
 		// Upper bound
-		predict_observe_moon(obs, predict_to_julian(time + DIFF), &moon_obs_upper);
+		predict_observe_moon(obs, julian_from_timestamp(time + DIFF), &moon_obs_upper);
 
 		// Check values
 		string failed = "";
@@ -88,20 +90,20 @@ int runtest(const char *filename)
 		}
 
 		//calculate RA, dec and GHA
-		double dec_lower = predict_moon_declination(predict_to_julian(time))*180.0/M_PI;
-		double dec_upper = predict_moon_declination(predict_to_julian(time + DIFF))*180.0/M_PI;
+		double dec_lower = predict_moon_declination(julian_from_timestamp(time))*180.0/M_PI;
+		double dec_upper = predict_moon_declination(julian_from_timestamp(time + DIFF))*180.0/M_PI;
 		if (!fuzzyCompareWithBoundaries(dec_lower, dec_upper, dec)) {
 			failed += "(declination)";
 		}
 
-		double ra_lower = predict_moon_ra(predict_to_julian(time))*180.0/M_PI;
-		double ra_upper = predict_moon_ra(predict_to_julian(time + DIFF))*180.0/M_PI;
+		double ra_lower = predict_moon_ra(julian_from_timestamp(time))*180.0/M_PI;
+		double ra_upper = predict_moon_ra(julian_from_timestamp(time + DIFF))*180.0/M_PI;
 		if (!fuzzyCompareWithBoundaries(ra_lower, ra_upper, ra)) {
 			failed += "(right ascension)";
 		}
 
-		double gha_lower = predict_moon_gha(predict_to_julian(time))*180.0/M_PI;
-		double gha_upper = predict_moon_gha(predict_to_julian(time + DIFF))*180.0/M_PI;
+		double gha_lower = predict_moon_gha(julian_from_timestamp(time))*180.0/M_PI;
+		double gha_upper = predict_moon_gha(julian_from_timestamp(time + DIFF))*180.0/M_PI;
 		if (!fuzzyCompareWithBoundaries(gha_lower, gha_upper, gha)) {
 			failed += "(GHA)";
 		}

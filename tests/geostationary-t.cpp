@@ -12,6 +12,10 @@
 #include <iostream>
 #include <fstream>
 
+static predict_orbital_elements_t e;
+static predict_sdp4 d;
+static predict_sgp4 g;
+
 /**
  * Satellite structure with name and orbital elements.
  **/
@@ -109,7 +113,7 @@ std::vector<satellite_t> orbital_elements_from_file(const char *tle_file)
 		if (fgets(line2, NUM_CHARS_IN_TLE, fd) == NULL) break;
 
 		//parse element set
-		predict_orbital_elements_t *temp_elements = predict_parse_tle(line1, line2);
+		predict_orbital_elements_t *temp_elements = predict_parse_tle(&e, &g, &d, line1, line2);
 		satellite.elements = temp_elements;
 		satellite.name = std::string(name);
 

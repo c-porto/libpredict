@@ -8,6 +8,10 @@
 #include <iostream>
 using namespace std;
 
+static predict_orbital_elements_t e;
+static predict_sdp4 d;
+static predict_sgp4 g;
+static predict_observer_t o;
 int runtest(const char *filename);
 
 int main(int argc, char **argv)
@@ -69,15 +73,15 @@ int runtest(const char *filename)
 	testcase.getTLE(tle);
 
 	//create orbit object
-	predict_orbital_elements_t *orbital_elements = predict_parse_tle(tle[0], tle[1]);
+	predict_orbital_elements_t *orbital_elements = predict_parse_tle(&e, &g, &d, tle[0], tle[1]);
 
 	if (predict_is_geosynchronous(orbital_elements)) {
 		return 0;
 	}
 
 	//test at the standard defined QTH
-	double start_time = predict_to_julian(testcase.data()[0][0]);
-	predict_observer_t *observer = predict_create_observer("test", testcase.latitude()*M_PI/180.0, testcase.longitude()*M_PI/180.0, testcase.altitude());
+	double start_time = julian_from_timestamp(testcase.data()[0][0]);
+	predict_observer_t *observer = predict_create_observer(&o, "test", testcase.latitude()*M_PI/180.0, testcase.longitude()*M_PI/180.0, testcase.altitude());
 	if (test_max_elevation(start_time, observer, orbital_elements) != 0) {
 		fprintf(stderr, "Failed on fixed QTH.\n");
 		return -1;
@@ -87,7 +91,7 @@ int runtest(const char *filename)
 	struct predict_position orbit;
 	struct predict_observation obs;
 	predict_orbit(orbital_elements, &orbit, start_time);
-	observer = predict_create_observer("problematic", orbit.latitude, orbit.longitude, 0);
+	observer = predict_create_observer(&o, "problematic", orbit.latitude, orbit.longitude, 0);
 	double max_elevation_time = start_time;
 
 	//test that the elevation actually is 90.0

@@ -8,6 +8,11 @@
 #include <iostream>
 using namespace std;
 
+static predict_orbital_elements_t e;
+static predict_sdp4 d;
+static predict_sgp4 g;
+static predict_observer_t o;
+
 int runtest(const char *filename);
 
 int main(int argc, char **argv)
@@ -58,17 +63,17 @@ int runtest(const char *filename)
 	testcase.getTLE(tle);
 
 	// Create orbit object
-	predict_orbital_elements_t *orbital_elements = predict_parse_tle(tle[0], tle[1]);
+	predict_orbital_elements_t *orbital_elements = predict_parse_tle(&e, &g, &d, tle[0], tle[1]);
 
 	// Create observer object
-	predict_observer_t *obs = predict_create_observer("test", testcase.latitude()*M_PI/180.0, testcase.longitude()*M_PI/180.0, testcase.altitude());
+	predict_observer_t *obs = predict_create_observer(&o, "test", testcase.latitude()*M_PI/180.0, testcase.longitude()*M_PI/180.0, testcase.altitude());
 	if (!obs) {
 		fprintf(stderr, "Failed to initialize observer!");
 		return -1;
 	}
 
 	// Use first available time as start time for AOS/LOS finding
-	double start_time = predict_to_julian(testcase.data()[0][0]);
+	double start_time = timestamp_from_julian(testcase.data()[0][0]);
 
 	//check whether the pass makes sense wrt elevation and/or elevation rate at start, end and middle of pass
 	if (aoslos_timepoint_consistency_test(orbital_elements, obs, start_time) != 0) {
