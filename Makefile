@@ -1,7 +1,7 @@
-STATIC_TARGET=libpredict.a
-SHARED_TARGET=libpredict.so
+LIB_PREDICT_VERSION = 1.0
 
-LIB_PREDICT_VERSION = 1
+STATIC_TARGET := libpredict.a
+SHARED_TARGET := libpredict.so.$(LIB_PREDICT_VERSION)
 
 BUILD_DIR ?= $(CURDIR)
 
@@ -15,7 +15,7 @@ LD_FLAGS_APPEND ?=
 CC_FLAGS_APPEND ?= 
 
 AR_FLAGS := rcs
-LD_FLAGS := -shared -soname $(SHARED_TARGET).$(LIB_PREDICT_VERSION) -lc -lm
+LD_FLAGS := -shared -soname  -lc -lm
 
 AR_FLAGS += $(AR_FLAGS_APPEND)
 LD_FLAGS += $(LD_FLAGS_APPEND)
