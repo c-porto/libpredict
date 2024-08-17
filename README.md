@@ -18,7 +18,7 @@ compliance, pretty much every single function of the original library will be mo
 The following list contains the status of the library files:
 
 - [X] Headers
-- [ ] Orbit (Partially Compliant)
+- [X] Orbit 
 - [ ] Observer
 - [X] SGP4
 - [ ] SDP4
