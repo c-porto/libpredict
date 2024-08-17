@@ -13,13 +13,13 @@ extern "C" {
  */
 ///@{
 /// lower mean motion for geosynchronous satellites
-#define GEOSYNCHRONOUS_LOWER_MEAN_MOTION             ( ( double ) 0.9 )
+#define GEOSYNCHRONOUS_LOWER_MEAN_MOTION             ( 0.9 )
 /// upper mean motion for geosynchronous satellites
-#define GEOSYNCHRONOUS_UPPER_MEAN_MOTION             ( ( double ) 1.1 )
+#define GEOSYNCHRONOUS_UPPER_MEAN_MOTION             ( 1.1 )
 /// upper eccentricity for geosynchronous satellites
-#define GEOSYNCHRONOUS_ECCENTRICITY_THRESHOLD        ( ( double ) 0.2 )
+#define GEOSYNCHRONOUS_ECCENTRICITY_THRESHOLD        ( 0.2 )
 /// upper inclination for geosynchronous satellites
-#define GEOSYNCHRONOUS_INCLINATION_THRESHOLD_DEGREES ( ( double ) 70 )
+#define GEOSYNCHRONOUS_INCLINATION_THRESHOLD_DEGREES ( 70 )
 ///@}
 
 /** \name Mathematical constants
@@ -27,15 +27,15 @@ extern "C" {
  */
 ///@{
 /// pi
-#define PI                                           ( ( double ) 3.14159265358979323846 )
+#define PI                                           ( 3.14159265358979323846 )
 /// pi/2
-#define PI_HALF                                      ( ( double ) 1.57079632679489656 )
+#define PI_HALF                                      ( 1.57079632679489656 )
 /// 2*pi
-#define TWO_PI                                       ( ( double ) 6.28318530717958623 )
+#define TWO_PI                                       ( 6.28318530717958623 )
 /// 3*pi/2
-#define THREE_PI_HALF                                ( ( double ) 4.71238898038468967 )
+#define THREE_PI_HALF                                ( 4.71238898038468967 )
 /// 2/3
-#define TWO_THIRD                                    ( ( double ) 6.6666666666666666E-1 )
+#define TWO_THIRD                                    ( 6.6666666666666666E-1 )
 ///@}
 
 /** \name Time constants
@@ -43,12 +43,12 @@ extern "C" {
  */
 ///@{
 /// Number of minutes per day, XMNPDA in spacetrack report #3
-#define MINUTES_PER_DAY                              ( ( double ) 1.44E3 )
+#define MINUTES_PER_DAY                              ( 1.44E3 )
 /// Number of seconds per day
-#define SECONDS_PER_DAY                              ( ( double ) 8.6400E4 )
+#define SECONDS_PER_DAY                              ( 8.6400E4 )
 /// Difference between libpredict's predict_julian_date_t and the julian time
 /// format used in some of the internal functions
-#define JULIAN_TIME_DIFF                             ( ( double ) 2444238.5 )
+#define JULIAN_TIME_DIFF                             ( 2444238.5 )
 ///@}
 
 /** \name Physical properties
@@ -56,23 +56,23 @@ extern "C" {
  */
 ///@{
 /// J3 Harmonic (WGS '72), XJ3 in spacetrack report #3
-#define J3_HARMONIC_WGS72                            ( ( double ) -2.53881E-6 )
+#define J3_HARMONIC_WGS72                            ( -2.53881E-6 )
 /// WGS 84 Earth radius km, XKMPER in spacetrack report #3
-#define EARTH_RADIUS_KM_WGS84                        ( ( double ) 6.378137E3 )
+#define EARTH_RADIUS_KM_WGS84                        ( 6.378137E3 )
 /// Flattening factor
-#define FLATTENING_FACTOR                            ( ( double ) 3.35281066474748E-3 )
+#define FLATTENING_FACTOR                            ( 3.35281066474748E-3 )
 /// Earth rotations per siderial day
-#define EARTH_ROTATIONS_PER_SIDERIAL_DAY             ( ( double ) 1.00273790934 )
+#define EARTH_ROTATIONS_PER_SIDERIAL_DAY             ( 1.00273790934 )
 /// Solar radius in kilometers (IAU 76)
-#define SOLAR_RADIUS_KM                              ( ( double ) 6.96000E5 )
+#define SOLAR_RADIUS_KM                              ( 6.96000E5 )
 /// Astronomical unit in kilometers (IAU 76)
-#define ASTRONOMICAL_UNIT_KM                         ( ( double ) 1.49597870691E8 )
+#define ASTRONOMICAL_UNIT_KM                         ( 1.49597870691E8 )
 /// Upper elevation threshold for nautical twilight
-#define NAUTICAL_TWILIGHT_SUN_ELEVATION              ( ( double ) -12.0 )
+#define NAUTICAL_TWILIGHT_SUN_ELEVATION              ( -12.0 )
 /// Speed of light in vacuum
-#define SPEED_OF_LIGHT                               ( ( double ) 299792458.0 )
+#define SPEED_OF_LIGHT                               ( 299792458.0 )
 /// Angular velocity of Earth in radians per seconds
-#define EARTH_ANGULAR_VELOCITY                       ( ( double ) 7.292115E-5 )
+#define EARTH_ANGULAR_VELOCITY                       ( 7.292115E-5 )
 ///@}
 
 /** \name Iteration constants
@@ -81,7 +81,7 @@ extern "C" {
  */
 ///@{
 /// Threshold used for fine-tuning of AOS/LOS
-#define AOSLOS_HORIZON_THRESHOLD                     ( ( double ) 0.3 )
+#define AOSLOS_HORIZON_THRESHOLD                     ( 0.3 )
 /// Threshold used for comparing lower and upper brackets in find_max_elevation
 #define MAXELE_TIME_EQUALITY_THRESHOLD               FLT_EPSILON
 /// Maximum number of iterations in find_max_elevation
@@ -95,10 +95,10 @@ extern "C" {
 ///@{
 /// k_e = sqrt(Newton's universal gravitational * mass of the Earth), in units
 /// (earth radii per minutes)^3/2
-#define XKE                                          ( ( double ) 7.43669161E-2 )
+#define XKE                                          ( 7.43669161E-2 )
 /// Corresponds to 1/2 * J_2 * a_E^2. J_2 is the second gravitational zonal
 /// harmonic of Earth, a_E is the equatorial radius of Earth.
-#define CK2                                          ( ( double ) 5.413079E-4 )
+#define CK2                                          ( 5.413079E-4 )
 ///@}
 
 /** \name Specific spacetrack report #3 constants
@@ -107,17 +107,17 @@ extern "C" {
  */
 ///@{
 /// Shorthand for 10^-6.
-#define E6A                                          ( ( double ) 1.0E-6 )
+#define E6A                                          ( 1.0E-6 )
 /// Distance units / Earth radii.
-#define AE                                           ( ( double ) 1.0 )
+#define AE                                           ( 1.0 )
 /// Corresponds to -3/8 * J_4 * a_E^4, where J_4 is the fourth gravitational
 /// zonal harmonic of Earth.
-#define CK4                                          ( ( double ) 6.209887E-7 )
+#define CK4                                          ( 6.209887E-7 )
 /// Parameter for SGP4/SGP8 density function.
-#define S_DENSITY_PARAM                              ( ( double ) 1.012229 )
+#define S_DENSITY_PARAM                              ( 1.012229 )
 /// Corresponds to (q_0 - s)^4 in units (earth radii)^4, where q_0 and s are
 /// parameters for the SGP4/SGP8 density function.
-#define QOMS2T                                       ( ( double ) 1.880279E-09 )
+#define QOMS2T                                       ( 1.880279E-09 )
 ///@}
 
 /** \name Constants in deep space subroutines
