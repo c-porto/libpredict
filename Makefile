@@ -15,7 +15,7 @@ LD_FLAGS_APPEND ?=
 CC_FLAGS_APPEND ?= 
 
 AR_FLAGS := rcs
-LD_FLAGS := -shared -soname  -lc -lm
+LD_FLAGS := -shared -soname $(SHARED_TARGET) -lc -lm
 
 AR_FLAGS += $(AR_FLAGS_APPEND)
 LD_FLAGS += $(LD_FLAGS_APPEND)
