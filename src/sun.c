@@ -29,28 +29,28 @@ void sun_predict( double time, double position[ 3 ] )
     double mjd = jul_utc - 2415020.0;
     double year = 1900.0 + ( mjd / 365.25 );
     double T = ( mjd + ( Delta_ET( year ) / SECONDS_PER_DAY ) ) / 36525.0;
-    double M = unsortedDEGREES_TO_RADIANS(
+    double M = predictDEG2RAD(
         fmod( 358.47583 + fmod( 35999.04975 * T, 360.0 ) -
                   ( 0.000150 + ( 0.0000033 * T ) ) * Sqr( T ),
               360.0 ) );
-    double L = unsortedDEGREES_TO_RADIANS(
+    double L = predictDEG2RAD(
         fmod( 279.69668 + fmod( 36000.76892 * T, 360.0 ) +
                   ( 0.0003025 * Sqr( T ) ),
               360.0 ) );
     double e = 0.01675104 - ( ( 0.0000418 + ( 0.000000126 * T ) ) * T );
-    double C = unsortedDEGREES_TO_RADIANS(
+    double C = predictDEG2RAD(
         ( ( 1.919460 - ( ( 0.004789 + ( 0.000014 * T ) ) * T ) ) * sin( M ) ) +
         ( ( 0.020094 - ( 0.000100 * T ) ) * sin( 2.0 * M ) ) +
         ( 0.000293 * sin( 3.0 * M ) ) );
-    double O = unsortedDEGREES_TO_RADIANS(
+    double O = predictDEG2RAD(
         fmod( 259.18 - ( 1934.142 * T ), 360.0 ) );
     double Lsa = fmod( L + C -
-                           unsortedDEGREES_TO_RADIANS( 0.00569 -
+                           predictDEG2RAD( 0.00569 -
                                                        ( 0.00479 * sin( O ) ) ),
                        2 * M_PI );
     double nu = fmod( M + C, 2 * M_PI );
     double R = 1.0000002 * ( 1.0 - Sqr( e ) ) / ( 1.0 + ( e * cos( nu ) ) );
-    double eps = unsortedDEGREES_TO_RADIANS(
+    double eps = predictDEG2RAD(
         23.452294 -
         ( ( 0.0130125 + ( 0.00000164 - ( 0.000000503 * T ) ) * T ) * T ) +
         ( 0.00256 * cos( O ) ) );
@@ -161,6 +161,6 @@ double predict_sun_gha( predict_julian_date_t time )
     Calculate_LatLonAlt( time, solar_vector, &solar_latlonalt );
 
     // return longitude as the GHA
-    double sun_lon = 360.0 - unsortedRADIANS_TO_DEGREES( solar_latlonalt.lon );
+    double sun_lon = 360.0 - predictRAD2DEG( solar_latlonalt.lon );
     return sun_lon * M_PI / 180.0;
 }

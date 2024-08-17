@@ -247,8 +247,8 @@ void Calculate_LatLonAlt( double time,
     geodetic->alt = r / cos( geodetic->lat ) -
                     ( EARTH_RADIUS_KM_WGS84 * c ); /* kilometers */
 
-    unsortedFIX_ANGLE( geodetic->lat, PI_HALF );
-    unsortedFIX_ANGLE( geodetic->lon, M_PI );
+    predictFIX_ANGLE( geodetic->lat, PI_HALF );
+    predictFIX_ANGLE( geodetic->lon, M_PI );
 }
 
 void Calculate_Obs( double time,

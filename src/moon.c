@@ -67,12 +67,12 @@ static void predict_moon( double time, struct moon * moon )
     ex = 1.0 - 0.002495 * t - 0.00000752 * t2;
     om = om * M_PI / 180.0;
 
-    l1 = unsortedPRIME_ANGLE( l1 );
-    m = unsortedPRIME_ANGLE( m );
-    m1 = unsortedPRIME_ANGLE( m1 );
-    d = unsortedPRIME_ANGLE( d );
-    ff = unsortedPRIME_ANGLE( ff );
-    om = unsortedPRIME_ANGLE( om );
+    l1 = predictPRIME_ANGLE( l1 );
+    m = predictPRIME_ANGLE( m );
+    m1 = predictPRIME_ANGLE( m1 );
+    d = predictPRIME_ANGLE( d );
+    ff = predictPRIME_ANGLE( ff );
+    om = predictPRIME_ANGLE( om );
 
     m = m * M_PI / 180.0;
     m1 = m1 * M_PI / 180.0;

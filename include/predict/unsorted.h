@@ -9,10 +9,14 @@ extern "C" {
 #include <stdbool.h>
 #include <stdint.h>
 
-#define unsortedPRIME_ANGLE( angle ) \
+#ifndef M_PI
+    #define M_PI 3.14159265358979323846
+#endif
+
+#define predictPRIME_ANGLE( angle ) \
     ( angle ) - 360.0 * floor( ( angle ) / 360.0 )
 
-#define unsortedFIX_ANGLE( angle, limit )     \
+#define predictFIX_ANGLE( angle, limit )      \
     do                                        \
     {                                         \
         if( ( angle ) > ( limit ) )           \
@@ -21,9 +25,9 @@ extern "C" {
         }                                     \
     } while( 0 )
 
-#define unsortedDEGREES_TO_RADIANS( angle ) ( ( angle ) * M_PI / 180.0 )
+#define predictDEG2RAD( x ) ( ( x ) * M_PI / 180.0 )
 
-#define unsortedRADIANS_TO_DEGREES( angle ) ( ( angle ) * 180.0 / M_PI )
+#define predictRAD2DEG( x ) ( ( x ) * 180.0 / M_PI )
 
 /**
  * This function reduces angles greater than two pi by subtracting two pi
