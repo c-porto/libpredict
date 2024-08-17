@@ -2,18 +2,16 @@
 
 <h2 align='center'> <strong> A satellite orbit prediction library. </strong> </h2>
 
-## Disclaimer
-
 This is a fork of **[la1k/libpredict](https://github.com/la1k/libpredict/)** and is inspired by **[philcrump's](https://github.com/philcrump/libpredict/)** fork of the same library. 
-See the [License](#license) section for specifics.
+See the [License](#license) section for Copyright notice.
 
-## Major differences from la1k's
+## Major differences from la1k's library
 
-This fork is intended to be used by embedded systems, so it supports static allocated
+This fork is intended to be used on embedded systems, therefore it supports static allocated
 structs, instead of the dynamic allocated ones from the original library. Another major 
 change is that this fork intends to make the library MISRA-C 2012 compliant, which is 
-a requirement for many critical embedded applications, like satellite's. Because of 
-compliance, pretty much every single function of the original library will be modified.
+a requirement for many critical embedded applications, like spacecraft. Because of 
+compliance, pretty much every single function of the original library will be modified. 
 
 ## MISRA-C 2012 Compliance Progress
 
@@ -38,17 +36,22 @@ To build the library it should be as simple as running:
 make
 ```
 
-To specify the build directory you could run:
+To specify a custom build directory you can do as follows:
 
 ``` bash
 make BUILD_DIR=/your/build/dir/
 ```
 
-To specify a custom toolchain prefix like arm toolchain , you can do as follows:
+To specify a custom toolchain prefix, like the arm-none-eabi, you can do as follows:
 
 ``` bash
 make TOOLCHAIN_PREFIX=arm-none-eabi- CC_FLAGS_APPEND="-mthumb -mcpu=cortex-m3" 
 ```
+
+Note that any compiler, linker and ar flags can be appended to the default ones using 
+`CC_FLAGS_APPEND`, `LD_FLAGS_APPEND` and `AR_FLAGS_APPEND` variables. The previous 
+toolchain example shows how its done aswell.
+
 
 ## Installation
 
