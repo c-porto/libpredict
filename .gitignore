@@ -58,3 +58,4 @@ dkms.conf
 
 # Build 
 **/build
+*.ctu-info
