@@ -71,8 +71,8 @@ void sgp4_init( const predict_orbital_elements_t * orbital_elements,
     /* anomaly.  Also, the c3 term, the delta omega term, and */
     /* the delta m term are dropped.                          */
 
-    if( ( m->aodp * ( 1 - m->eo ) / AE ) <
-        ( 220 / EARTH_RADIUS_KM_WGS84 + AE ) )
+    if( ( m->aodp * ( 1.0 - m->eo ) / AE ) <
+        ( ( 220.0 / EARTH_RADIUS_KM_WGS84 ) + AE ) )
     {
         m->simpleFlag = true;
     }
@@ -100,7 +100,7 @@ void sgp4_init( const predict_orbital_elements_t * orbital_elements,
         }
 
         qoms24 = pow( ( 120.0 - s4 ) * AE / EARTH_RADIUS_KM_WGS84, 4.0 );
-        s4 = s4 / EARTH_RADIUS_KM_WGS84 + AE;
+        s4 = ( s4 / EARTH_RADIUS_KM_WGS84 ) + AE;
     }
 
     pinvsq = 1 / ( m->aodp * m->aodp * betao2 * betao2 );
