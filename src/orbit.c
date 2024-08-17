@@ -2,6 +2,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 
 #include <predict/defs.h>
 #include <predict/sdp4.h>
@@ -9,12 +10,19 @@
 #include <predict/sun.h>
 #include <predict/unsorted.h>
 
-bool is_eclipsed( const double pos[ 3 ],
-                  const double sol[ 3 ],
-                  double * depth );
+static bool is_eclipsed( const double pos[ 3 ],
+                         const double sol[ 3 ],
+                         double * depth );
 
-bool predict_decayed( const predict_orbital_elements_t * orbital_elements,
-                      predict_julian_date_t time );
+static bool predict_decayed( const predict_orbital_elements_t * orbital_elements,
+                             predict_julian_date_t time );
+
+static int32_t parse_tle_field_i32( const char * tle_sub_string,
+                                    int32_t * param );
+static int32_t parse_tle_field_i64( const char * tle_sub_string,
+                                    int64_t * param );
+static int32_t parse_tle_field_f64( const char * tle_sub_string,
+                                    double * param );
 
 // length of buffer used for extracting subsets of TLE strings for parsing
 #define SUBSTRING_BUFFER_LENGTH 50
@@ -26,7 +34,8 @@ predict_orbital_elements_t * predict_parse_tle(
     const char * tle_line_1,
     const char * tle_line_2 )
 {
-    double tempnum;
+    double tempnum = 0.0;
+    int32_t err = 0;
     predict_orbital_elements_t * m = NULL;
 
     if( ( orbital_elements != NULL ) && ( tle_line_1 != NULL ) &&
@@ -35,145 +44,230 @@ predict_orbital_elements_t * predict_parse_tle(
         m = orbital_elements;
 
         char substring_buffer[ SUBSTRING_BUFFER_LENGTH ];
-        m->satellite_number = atol( SubString( tle_line_1,
-                                               SUBSTRING_BUFFER_LENGTH,
-                                               substring_buffer,
-                                               2,
-                                               6 ) );
-        m->element_number = atol( SubString( tle_line_1,
-                                             SUBSTRING_BUFFER_LENGTH,
-                                             substring_buffer,
-                                             64,
-                                             67 ) );
-        m->epoch_year = atoi( SubString( tle_line_1,
-                                         SUBSTRING_BUFFER_LENGTH,
-                                         substring_buffer,
-                                         18,
-                                         19 ) );
-        ( void ) strncpy( m->designator,
-                          SubString( tle_line_1,
-                                     SUBSTRING_BUFFER_LENGTH,
-                                     substring_buffer,
-                                     9,
-                                     16 ),
-                          8 );
-        m->epoch_day = atof( SubString( tle_line_1,
-                                        SUBSTRING_BUFFER_LENGTH,
-                                        substring_buffer,
-                                        20,
-                                        31 ) );
-        m->inclination = atof( SubString( tle_line_2,
-                                          SUBSTRING_BUFFER_LENGTH,
-                                          substring_buffer,
-                                          8,
-                                          15 ) );
-        m->right_ascension = atof( SubString( tle_line_2,
+        err = parse_tle_field_i32( SubString( tle_line_1,
                                               SUBSTRING_BUFFER_LENGTH,
                                               substring_buffer,
-                                              17,
-                                              24 ) );
-        m->eccentricity = 1.0e-07 * atof( SubString( tle_line_2,
-                                                     SUBSTRING_BUFFER_LENGTH,
-                                                     substring_buffer,
-                                                     26,
-                                                     32 ) );
-        m->argument_of_perigee = atof( SubString( tle_line_2,
+                                              2,
+                                              6 ),
+                                   &m->satellite_number );
+        if( err == 0 )
+        {
+            err = parse_tle_field_i64( SubString( tle_line_1,
+                                                  SUBSTRING_BUFFER_LENGTH,
+                                                  substring_buffer,
+                                                  64,
+                                                  67 ),
+                                       &m->element_number );
+        }
+
+        if( err == 0 )
+        {
+            err = parse_tle_field_i32( SubString( tle_line_1,
+                                                  SUBSTRING_BUFFER_LENGTH,
+                                                  substring_buffer,
+                                                  18,
+                                                  19 ),
+                                       &m->epoch_year );
+        }
+
+        if( err == 0 )
+        {
+            ( void ) strncpy( m->designator,
+                              SubString( tle_line_1,
+                                         SUBSTRING_BUFFER_LENGTH,
+                                         substring_buffer,
+                                         9,
+                                         16 ),
+                              8 );
+        }
+
+        if( err == 0 )
+        {
+            err = parse_tle_field_f64( SubString( tle_line_1,
+                                                  SUBSTRING_BUFFER_LENGTH,
+                                                  substring_buffer,
+                                                  20,
+                                                  31 ),
+                                       &m->epoch_day );
+        }
+
+        if( err == 0 )
+        {
+            err = parse_tle_field_f64( SubString( tle_line_2,
+                                                  SUBSTRING_BUFFER_LENGTH,
+                                                  substring_buffer,
+                                                  8,
+                                                  15 ),
+                                       &m->inclination );
+        }
+
+        if( err == 0 )
+        {
+            err = parse_tle_field_f64( SubString( tle_line_2,
+                                                  SUBSTRING_BUFFER_LENGTH,
+                                                  substring_buffer,
+                                                  17,
+                                                  24 ),
+                                       &m->right_ascension );
+        }
+
+        if( err == 0 )
+        {
+            err = parse_tle_field_f64( SubString( tle_line_2,
+                                                  SUBSTRING_BUFFER_LENGTH,
+                                                  substring_buffer,
+                                                  26,
+                                                  32 ),
+                                       &m->eccentricity );
+            m->eccentricity = m->eccentricity * 1.0e-07;
+        }
+
+        if( err == 0 )
+        {
+            err = parse_tle_field_f64( SubString( tle_line_2,
                                                   SUBSTRING_BUFFER_LENGTH,
                                                   substring_buffer,
                                                   34,
-                                                  41 ) );
-        m->mean_anomaly = atof( SubString( tle_line_2,
-                                           SUBSTRING_BUFFER_LENGTH,
-                                           substring_buffer,
-                                           43,
-                                           50 ) );
-        m->mean_motion = atof( SubString( tle_line_2,
-                                          SUBSTRING_BUFFER_LENGTH,
-                                          substring_buffer,
-                                          52,
-                                          62 ) );
-        m->derivative_mean_motion = atof( SubString( tle_line_1,
-                                                     SUBSTRING_BUFFER_LENGTH,
-                                                     substring_buffer,
-                                                     33,
-                                                     42 ) );
-        tempnum = 1.0e-5 * atof( SubString( tle_line_1,
-                                            SUBSTRING_BUFFER_LENGTH,
-                                            substring_buffer,
-                                            44,
-                                            49 ) );
-        m->second_derivative_mean_motion = tempnum /
-                                           pow( 10.0,
-                                                ( tle_line_1[ 51 ] - '0' ) );
-        tempnum = 1.0e-5 * atof( SubString( tle_line_1,
-                                            SUBSTRING_BUFFER_LENGTH,
-                                            substring_buffer,
-                                            53,
-                                            58 ) );
-        m->bstar_drag_term = tempnum / pow( 10.0, ( tle_line_1[ 60 ] - '0' ) );
-        m->revolutions_at_epoch = atof( SubString( tle_line_2,
-                                                   SUBSTRING_BUFFER_LENGTH,
-                                                   substring_buffer,
-                                                   63,
-                                                   67 ) );
+                                                  41 ),
+                                       &m->argument_of_perigee );
+        }
 
-        /* Period > 225 minutes is deep space */
-        double ao;
-        double xnodp;
-        double dd1;
-        double dd2;
-        double delo;
-        double a1;
-        double del1;
-        double r1;
-        double temp = TWO_PI / MINUTES_PER_DAY / MINUTES_PER_DAY;
-        double xno = m->mean_motion * temp *
-                     MINUTES_PER_DAY; // from old TLE struct
-        dd1 = ( XKE / xno );
-        dd2 = TWO_THIRD;
-        a1 = pow( dd1, dd2 );
-        r1 = cos( m->inclination * M_PI / 180.0 );
-        dd1 = ( 1.0 - ( m->eccentricity * m->eccentricity ) );
-        temp = CK2 * 1.5f * ( ( r1 * r1 * 3.0 ) - 1.0 ) / pow( dd1, 1.5 );
-        del1 = temp / ( a1 * a1 );
-        ao = a1 * ( 1.0 - ( del1 * ( ( TWO_THIRD * 0.5 ) +
-                                     ( del1 * ( ( del1 * 1.654320987654321 ) +
-                                                1.0 ) ) ) ) );
-        delo = temp / ( ao * ao );
-        xnodp = xno / ( delo + 1.0 );
-
-        /* Select a deep-space/near-earth ephemeris */
-        if( ( TWO_PI / xnodp / MINUTES_PER_DAY ) >= 0.15625 )
+        if( err == 0 )
         {
-            m->ephemeris = EPHEMERIS_SDP4;
+            err = parse_tle_field_f64( SubString( tle_line_2,
+                                                  SUBSTRING_BUFFER_LENGTH,
+                                                  substring_buffer,
+                                                  43,
+                                                  50 ),
+                                       &m->mean_anomaly );
+        }
 
-            m->ephemeris_data = sdp4;
+        if( err == 0 )
+        {
+            err = parse_tle_field_f64( SubString( tle_line_2,
+                                                  SUBSTRING_BUFFER_LENGTH,
+                                                  substring_buffer,
+                                                  52,
+                                                  62 ),
+                                       &m->mean_motion );
+        }
 
-            if( m->ephemeris_data == NULL )
+        if( err == 0 )
+        {
+            err = parse_tle_field_f64( SubString( tle_line_1,
+                                                  SUBSTRING_BUFFER_LENGTH,
+                                                  substring_buffer,
+                                                  33,
+                                                  42 ),
+                                       &m->derivative_mean_motion );
+        }
+
+        if( err == 0 )
+        {
+            err = 1.0e-5 *
+                  parse_tle_field_f64( SubString( tle_line_1,
+                                                  SUBSTRING_BUFFER_LENGTH,
+                                                  substring_buffer,
+                                                  44,
+                                                  49 ),
+                                       &tempnum );
+            tempnum = 1.0e-5 * tempnum;
+        }
+
+        if( err == 0 )
+        {
+            m->second_derivative_mean_motion = tempnum /
+                                               pow( 10.0,
+                                                    ( tle_line_1[ 51 ] -
+                                                      '0' ) );
+
+            err = parse_tle_field_f64( SubString( tle_line_1,
+                                                  SUBSTRING_BUFFER_LENGTH,
+                                                  substring_buffer,
+                                                  53,
+                                                  58 ),
+                                       &tempnum );
+            tempnum = 1.0e-5 * tempnum;
+        }
+
+        if( err == 0 )
+        {
+            m->bstar_drag_term = tempnum /
+                                 pow( 10.0, ( tle_line_1[ 60 ] - '0' ) );
+
+            err = parse_tle_field_i32( SubString( tle_line_2,
+                                                  SUBSTRING_BUFFER_LENGTH,
+                                                  substring_buffer,
+                                                  63,
+                                                  67 ),
+                                       &m->revolutions_at_epoch );
+        }
+
+        if( err == 0 )
+        {
+            /* Period > 225 minutes is deep space */
+            double ao;
+            double xnodp;
+            double dd1;
+            double dd2;
+            double delo;
+            double a1;
+            double del1;
+            double r1;
+            double temp = TWO_PI / MINUTES_PER_DAY / MINUTES_PER_DAY;
+            double xno = m->mean_motion * temp *
+                         MINUTES_PER_DAY; // from old TLE struct
+            dd1 = ( XKE / xno );
+            dd2 = TWO_THIRD;
+            a1 = pow( dd1, dd2 );
+            r1 = cos( m->inclination * M_PI / 180.0 );
+            dd1 = ( 1.0 - ( m->eccentricity * m->eccentricity ) );
+            temp = CK2 * 1.5f * ( ( r1 * r1 * 3.0 ) - 1.0 ) / pow( dd1, 1.5 );
+            del1 = temp / ( a1 * a1 );
+            ao = a1 *
+                 ( 1.0 - ( del1 * ( ( TWO_THIRD * 0.5 ) +
+                                    ( del1 * ( ( del1 * 1.654320987654321 ) +
+                                               1.0 ) ) ) ) );
+            delo = temp / ( ao * ao );
+            xnodp = xno / ( delo + 1.0 );
+
+            /* Select a deep-space/near-earth ephemeris */
+            if( ( TWO_PI / xnodp / MINUTES_PER_DAY ) >= 0.15625 )
             {
-                m = NULL;
+                m->ephemeris = EPHEMERIS_SDP4;
+
+                m->ephemeris_data = sdp4;
+
+                if( m->ephemeris_data == NULL )
+                {
+                    m = NULL;
+                }
+                else
+                {
+                    // Initialize ephemeris data structure
+                    sdp4_init( m, m->ephemeris_data );
+                }
             }
             else
             {
-                // Initialize ephemeris data structure
-                sdp4_init( m, m->ephemeris_data );
+                m->ephemeris = EPHEMERIS_SGP4;
+
+                m->ephemeris_data = sgp4;
+
+                if( m->ephemeris_data == NULL )
+                {
+                    m = NULL;
+                }
+                else
+                {
+                    // Initialize ephemeris data structure
+                    sgp4_init( m, m->ephemeris_data );
+                }
             }
         }
         else
         {
-            m->ephemeris = EPHEMERIS_SGP4;
-
-            m->ephemeris_data = sgp4;
-
-            if( m->ephemeris_data == NULL )
-            {
-                m = NULL;
-            }
-            else
-            {
-                // Initialize ephemeris data structure
-                sgp4_init( m, m->ephemeris_data );
-            }
+            m = NULL;
         }
     }
 
@@ -351,8 +445,8 @@ int32_t predict_orbit( const predict_orbital_elements_t * orbital_elements,
     return err;
 }
 
-bool predict_decayed( const predict_orbital_elements_t * orbital_elements,
-                      predict_julian_date_t time )
+static bool predict_decayed( const predict_orbital_elements_t * orbital_elements,
+                             predict_julian_date_t time )
 {
     double satepoch;
     satepoch = DayNum( 1, 0, orbital_elements->epoch_year ) +
@@ -370,7 +464,9 @@ bool predict_decayed( const predict_orbital_elements_t * orbital_elements,
 }
 
 /* Calculates if a position is eclipsed.  */
-bool is_eclipsed( const double pos[ 3 ], const double sol[ 3 ], double * depth )
+static bool is_eclipsed( const double pos[ 3 ],
+                         const double sol[ 3 ],
+                         double * depth )
 {
     bool retval;
     double Rho[ 3 ];
@@ -429,4 +525,90 @@ double predict_squint_angle( const predict_observer_t * observer,
                           obs.range );
 
     return squint;
+}
+
+static int32_t parse_tle_field_i32( const char * tle_sub_string,
+                                    int32_t * param )
+{
+    int32_t err = 0;
+    char * end_ptr = NULL;
+
+    errno = 0;
+    int64_t tmp = ( int64_t ) strtoll( tle_sub_string, &end_ptr, 10 );
+
+    if (errno != 0)
+    {
+        err = -1;
+    }
+
+    if( end_ptr == tle_sub_string )
+    {
+        err = -1;
+    }
+
+    if( ( tmp > INT32_MAX ) || ( tmp < INT32_MIN ) )
+    {
+        err = -1;
+    }
+
+    if( err == 0 )
+    {
+        *param = ( int32_t ) tmp;
+    }
+
+    return err;
+}
+
+static int32_t parse_tle_field_i64( const char * tle_sub_string,
+                                    int64_t * param )
+{
+    int32_t err = 0;
+    char * end_ptr = NULL;
+
+    errno = 0;
+    int64_t tmp = ( int64_t ) strtoll( tle_sub_string, &end_ptr, 10 );
+
+    if (errno != 0)
+    {
+        err = -1;
+    }
+
+    if( end_ptr == tle_sub_string )
+    {
+        err = -1;
+    }
+
+    if( err == 0 )
+    {
+        *param = ( int64_t ) tmp;
+    }
+
+    return err;
+}
+
+static int32_t parse_tle_field_f64( const char * tle_sub_string,
+                                    double * param )
+{
+    int32_t err = 0;
+    char * end_ptr = NULL;
+
+    errno = 0;
+    double tmp = ( double ) strtod( tle_sub_string, &end_ptr );
+
+    if (errno != 0)
+    {
+        err = -1;
+    }
+
+    if( end_ptr == tle_sub_string )
+    {
+        err = -1;
+    }
+
+    if( err == 0 )
+    {
+        *param = tmp;
+    }
+
+    return err;
 }
