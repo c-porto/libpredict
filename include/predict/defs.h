@@ -131,63 +131,63 @@ extern "C" {
  */
 ///@{
 /// Solar mean motion (n_s in units radians/minute, p. 29)
-#define ZNS                                          ( ( double ) 1.19459E-5 )
+#define ZNS                                          ( 1.19459E-5 )
 /// Solar perturbation coefficient (C_s in units radians/minute, p. 29)
-#define C1SS                                         ( ( double ) 2.9864797E-6 )
+#define C1SS                                         ( 2.9864797E-6 )
 /// Solar eccentricity (e_s, p. 29)
-#define ZES                                          ( ( double ) 1.675E-2 )
+#define ZES                                          ( 1.675E-2 )
 /// Lunar mean motion (n_m in units radians/minute, p. 29)
-#define ZNL                                          ( ( double ) 1.5835218E-4 )
+#define ZNL                                          ( 1.5835218E-4 )
 /// Lunar perturbation coefficient (C_m in units radians/minute, p. 29)
-#define C1L                                          ( ( double ) 4.7968065E-7 )
+#define C1L                                          ( 4.7968065E-7 )
 /// Lunar eccentricity (e_m, p. 29)
-#define ZEL                                          ( ( double ) 5.490E-2 )
+#define ZEL                                          ( 5.490E-2 )
 /// Cosine of the solar inclination (not defined directly in the paper, but
 /// corresponds with cos(I_s) with I_s as the solar inclination on p. 29)
-#define ZCOSIS                                       ( ( double ) 9.1744867E-1 )
+#define ZCOSIS                                       ( 9.1744867E-1 )
 /// Sine of the solar inclination (sin(I_s), I_s on p. 29. See comment above)
-#define ZSINIS                                       ( ( double ) 3.9785416E-1 )
+#define ZSINIS                                       ( 3.9785416E-1 )
 /// Corresponds to sin(\omega_s) (\omega_s defined on p. 29, no description. See
 /// comment above)
-#define ZSINGS                                       ( ( double ) -9.8088458E-1 )
+#define ZSINGS                                       ( -9.8088458E-1 )
 /// Corresponds to cos(\omega_s) (\omega_s defined on p. 29, no description. See
 /// comment above)
-#define ZCOSGS                                       ( ( double ) 1.945905E-1 )
+#define ZCOSGS                                       ( 1.945905E-1 )
 /// Constants for one-day resonance conditions, satellite-independent for 1-day
 /// period satellites (Initialization of resonance effects of Earth gravity,
 /// Q_22, Q_31 and Q_33, p. 31)
-#define Q22                                          ( ( double ) 1.7891679E-6 )
+#define Q22                                          ( 1.7891679E-6 )
 /// See above
-#define Q31                                          ( ( double ) 2.1460748E-6 )
+#define Q31                                          ( 2.1460748E-6 )
 /// See above
-#define Q33                                          ( ( double ) 2.2123015E-7 )
+#define Q33                                          ( 2.2123015E-7 )
 /// Constants for secular update for resonance effects of Earth gravity (G_22,
 /// G_32, G_44, G_52 and G_54, p. 36)
-#define G22                                          ( ( double ) 5.7686396 )
+#define G22                                          ( 5.7686396 )
 /// See above
-#define G32                                          ( ( double ) 9.5240898E-1 )
+#define G32                                          ( 9.5240898E-1 )
 /// See above
-#define G44                                          ( ( double ) 1.8014998 )
+#define G44                                          ( 1.8014998 )
 /// See above
-#define G52                                          ( ( double ) 1.0508330 )
+#define G52                                          ( 1.0508330 )
 /// See above
-#define G54                                          ( ( double ) 4.4108898 )
+#define G54                                          ( 4.4108898 )
 /// Constants for 1/2-day resonance conditions, satellite-independent for
 /// 1/2-day period satellites (Initialization for resonance effects of Earth
 /// gravity, sqrt(C_ij^2 + S_ij^2) where ij = 22, 32, 44, 52 and 54, p. 32)
-#define ROOT22                                       ( ( double ) 1.7891679E-6 )
+#define ROOT22                                       ( 1.7891679E-6 )
 /// See above
-#define ROOT32                                       ( ( double ) 3.7393792E-7 )
+#define ROOT32                                       ( 3.7393792E-7 )
 /// See above
-#define ROOT44                                       ( ( double ) 7.3636953E-9 )
+#define ROOT44                                       ( 7.3636953E-9 )
 /// See above
-#define ROOT52                                       ( ( double ) 1.1428639E-7 )
+#define ROOT52                                       ( 1.1428639E-7 )
 /// See above
-#define ROOT54                                       ( ( double ) 2.1765803E-9 )
+#define ROOT54                                       ( 2.1765803E-9 )
 /// The time-derivative of the Greenwich hour angle in radians per minute
 /// (\dot{\theta}, used on p. 36. Not directly defined in report, but values and
 /// naming are consistent with this)
-#define THDT                                         ( ( double ) 4.3752691E-3 )
+#define THDT                                         ( 4.3752691E-3 )
 ///@}
 
 #ifdef __cplusplus
