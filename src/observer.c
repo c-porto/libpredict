@@ -22,7 +22,7 @@ predict_observer_t * predict_create_observer( predict_observer_t * observer,
 
     if( obs != NULL )
     {
-        strncpy( obs->name, name, 128 );
+        ( void ) strncpy( obs->name, name, 128 );
         obs->name[ 127 ] = '\0';
         obs->latitude = lat;
         obs->longitude = lon;
@@ -42,31 +42,31 @@ void predict_observe_orbit( const predict_observer_t * observer,
                             const struct predict_position * orbit,
                             struct predict_observation * obs )
 {
-    if( obs == NULL )
-        return;
-
-    double julTime = orbit->time;
-
-    observer_calculate( observer,
-                        julTime,
-                        orbit->position,
-                        orbit->velocity,
-                        obs );
-
-    // Calculate visibility status of the orbit: Orbit is visible if sun
-    // elevation is low enough and the orbit is above the horizon, but still in
-    // sunlight.
-    obs->visible = false;
-    struct predict_observation sun_obs;
-    predict_observe_sun( observer, orbit->time, &sun_obs );
-    if( !( orbit->eclipsed ) &&
-        ( sun_obs.elevation * 180.0 / M_PI <
-          NAUTICAL_TWILIGHT_SUN_ELEVATION ) &&
-        ( obs->elevation * 180.0 / M_PI > 0 ) )
+    if( obs != NULL )
     {
-        obs->visible = true;
+        double julTime = orbit->time;
+
+        observer_calculate( observer,
+                            julTime,
+                            orbit->position,
+                            orbit->velocity,
+                            obs );
+
+        // Calculate visibility status of the orbit: Orbit is visible if sun
+        // elevation is low enough and the orbit is above the horizon, but still
+        // in sunlight.
+        obs->visible = false;
+        struct predict_observation sun_obs;
+        predict_observe_sun( observer, orbit->time, &sun_obs );
+        if( !( orbit->eclipsed ) &&
+            ( ( sun_obs.elevation * 180.0 / M_PI ) <
+              NAUTICAL_TWILIGHT_SUN_ELEVATION ) &&
+            ( ( obs->elevation * 180.0 / M_PI ) > 0.0 ) )
+        {
+            obs->visible = true;
+        }
+        obs->time = orbit->time;
     }
-    obs->time = orbit->time;
 }
 
 void observer_calculate( const predict_observer_t * observer,
@@ -109,57 +109,67 @@ void observer_calculate( const predict_observer_t * observer,
     double range_length = vec3_length( range );
     double range_rate_length = vec3_dot( range, rgvel ) / range_length;
 
-    double theta_dot = 2 * M_PI * EARTH_ROTATIONS_PER_SIDERIAL_DAY /
+    double theta_dot = 2.0 * M_PI * EARTH_ROTATIONS_PER_SIDERIAL_DAY /
                        SECONDS_PER_DAY;
     double sin_lat = sin( geodetic.lat );
     double cos_lat = cos( geodetic.lat );
     double sin_theta = sin( geodetic.theta );
     double cos_theta = cos( geodetic.theta );
 
-    double top_s = sin_lat * cos_theta * range[ 0 ] +
-                   sin_lat * sin_theta * range[ 1 ] - cos_lat * range[ 2 ];
-    double top_e = -sin_theta * range[ 0 ] + cos_theta * range[ 1 ];
-    double top_z = cos_lat * cos_theta * range[ 0 ] +
-                   cos_lat * sin_theta * range[ 1 ] + sin_lat * range[ 2 ];
+    double top_s = ( sin_lat * cos_theta * range[ 0 ] ) +
+                   ( sin_lat * sin_theta * range[ 1 ] ) -
+                   ( cos_lat * range[ 2 ] );
+    double top_e = ( -sin_theta * range[ 0 ] ) + ( cos_theta * range[ 1 ] );
+    double top_z = ( cos_lat * cos_theta * range[ 0 ] ) +
+                   ( cos_lat * sin_theta * range[ 1 ] ) +
+                   ( sin_lat * range[ 2 ] );
 
-    double top_s_dot = sin_lat * ( cos_theta * rgvel[ 0 ] -
-                                   sin_theta * range[ 0 ] * theta_dot ) +
-                       sin_lat * ( sin_theta * rgvel[ 1 ] +
-                                   cos_theta * range[ 1 ] * theta_dot ) -
-                       cos_lat * rgvel[ 2 ];
-    double top_e_dot = -( sin_theta * rgvel[ 0 ] +
-                          cos_theta * range[ 0 ] * theta_dot ) +
-                       ( cos_theta * rgvel[ 1 ] -
-                         sin_theta * range[ 1 ] * theta_dot );
+    double top_s_dot = ( sin_lat *
+                         ( ( cos_theta * rgvel[ 0 ] ) -
+                           ( sin_theta * range[ 0 ] * theta_dot ) ) ) +
+                       ( sin_lat *
+                         ( ( sin_theta * rgvel[ 1 ] ) +
+                           ( cos_theta * range[ 1 ] * theta_dot ) ) ) -
+                       ( cos_lat * rgvel[ 2 ] );
+    double top_e_dot = -( ( sin_theta * rgvel[ 0 ] ) +
+                          ( cos_theta * range[ 0 ] * theta_dot ) ) +
+                       ( ( cos_theta * rgvel[ 1 ] ) -
+                         ( sin_theta * range[ 1 ] * theta_dot ) );
 
-    double top_z_dot = cos_lat * ( cos_theta *
-                                       ( rgvel[ 0 ] + range[ 1 ] * theta_dot ) +
-                                   sin_theta * ( rgvel[ 1 ] -
-                                                 range[ 0 ] * theta_dot ) ) +
-                       sin_lat * rgvel[ 2 ];
+    double top_z_dot = cos_lat *
+                           ( cos_theta *
+                                 ( rgvel[ 0 ] + ( range[ 1 ] * theta_dot ) ) +
+                             ( sin_theta *
+                               ( rgvel[ 1 ] - ( range[ 0 ] * theta_dot ) ) ) ) +
+                       ( sin_lat * rgvel[ 2 ] );
 
     // Azimut
     double y = -top_e / top_s;
     double az = atan( -top_e / top_s );
 
     if( top_s > 0.0 )
+    {
         az = az + M_PI;
+    }
     if( az < 0.0 )
-        az = az + 2 * M_PI;
+    {
+        az = az + ( 2.0 * M_PI );
+    }
 
     // Azimut rate
-    double y_dot = -( top_e_dot * top_s - top_s_dot * top_e ) /
+    double y_dot = -( ( top_e_dot * top_s ) - ( top_s_dot * top_e ) ) /
                    ( top_s * top_s );
-    double az_dot = y_dot / ( 1 + y * y );
+    double az_dot = y_dot / ( 1.0 + ( y * y ) );
 
     // Elevation
     double x = top_z / range_length;
     double el = asin_( x );
 
     // Elevation rate
-    double x_dot = ( top_z_dot * range_length - range_rate_length * top_z ) /
+    double x_dot = ( ( top_z_dot * range_length ) -
+                     ( range_rate_length * top_z ) ) /
                    ( range_length * range_length );
-    double el_dot = x_dot / sqrt( 1 - x * x );
+    double el_dot = x_dot / sqrt( 1.0 - ( x * x ) );
 
     result->azimuth = az;
     result->azimuth_rate = az_dot;
@@ -179,10 +189,10 @@ struct predict_observation predict_next_aos(
 {
     double curr_time = start_utc;
     struct predict_observation obs;
-    double time_step = 0;
+    double time_step = 0.0;
 
     struct predict_position orbit;
-    predict_orbit( orbital_elements, &orbit, curr_time );
+    ( void ) predict_orbit( orbital_elements, &orbit, curr_time );
     predict_observe_orbit( observer, &orbit, &obs );
 
     // check whether AOS can happen after specified start time
@@ -207,23 +217,23 @@ struct predict_observation predict_next_aos(
                                                                curr_time );
             curr_time = los.time;
             curr_time += 1.0 / ( MINUTES_PER_DAY * 1.0 ) *
-                         20; // skip 20 minutes. LOS might still be within the
-                             // elevation threshold. (rough quickfix from
-                             // predict)
-            predict_orbit( orbital_elements, &orbit, curr_time );
+                         20.0; // skip 20 minutes. LOS might still be within the
+                               // elevation threshold. (rough quickfix from
+                               // predict)
+            ( void ) predict_orbit( orbital_elements, &orbit, curr_time );
             predict_observe_orbit( observer, &orbit, &obs );
         }
 
         // iteration until the orbit is roughly in range again, before the
         // satellite pass
-        while( ( obs.elevation * 180.0 / M_PI < -1.0 ) ||
+        while( ( ( obs.elevation * 180.0 / M_PI ) < -1.0 ) ||
                ( obs.elevation_rate < 0 ) )
         {
             time_step = 0.00035 * ( obs.elevation * 180.0 / M_PI *
                                         ( ( orbit.altitude / 8400.0 ) + 0.46 ) -
                                     2.0 );
             curr_time -= time_step;
-            predict_orbit( orbital_elements, &orbit, curr_time );
+            ( void ) predict_orbit( orbital_elements, &orbit, curr_time );
             predict_observe_orbit( observer, &orbit, &obs );
         }
 
@@ -234,7 +244,7 @@ struct predict_observation predict_next_aos(
             time_step = obs.elevation * 180.0 / M_PI * sqrt( orbit.altitude ) /
                         530000.0;
             curr_time -= time_step;
-            predict_orbit( orbital_elements, &orbit, curr_time );
+            ( void ) predict_orbit( orbital_elements, &orbit, curr_time );
             predict_observe_orbit( observer, &orbit, &obs );
         }
     }
@@ -263,30 +273,33 @@ enum step_pass_direction
  *stepped out of the pass \copyright GPLv2+
  **/
 static double step_pass( const predict_observer_t * observer,
-                  const predict_orbital_elements_t * orbital_elements,
-                  double curr_time,
-                  enum step_pass_direction direction )
+                         const predict_orbital_elements_t * orbital_elements,
+                         double curr_time,
+                         enum step_pass_direction direction )
 {
     struct predict_position orbit;
     struct predict_observation obs;
+    double current_time = curr_time;
+
     do
     {
-        predict_orbit( orbital_elements, &orbit, curr_time );
+        ( void ) predict_orbit( orbital_elements, &orbit, current_time );
         predict_observe_orbit( observer, &orbit, &obs );
 
         // weird time stepping from Predict, but which magically works
         double time_step = cos( obs.elevation - 1.0 ) * sqrt( orbit.altitude ) /
                            25000.0;
-        if( ( ( direction == POSITIVE_DIRECTION ) && time_step < 0 ) ||
-            ( ( direction == NEGATIVE_DIRECTION ) && time_step > 0 ) )
+        if( ( ( direction == POSITIVE_DIRECTION ) && ( time_step < 0.0 ) ) ||
+            ( ( direction == NEGATIVE_DIRECTION ) && ( time_step > 0.0 ) ) )
         {
             time_step = -time_step;
         }
 
-        curr_time += time_step;
-    } while( ( obs.elevation >= 0 ) || ( ( direction == POSITIVE_DIRECTION ) &&
-                                         ( obs.elevation_rate > 0.0 ) ) );
-    return curr_time;
+        current_time += time_step;
+    } while( ( obs.elevation >= 0.0 ) ||
+             ( ( direction == POSITIVE_DIRECTION ) &&
+               ( obs.elevation_rate > 0.0 ) ) );
+    return current_time;
 }
 
 struct predict_observation predict_next_los(
@@ -296,10 +309,10 @@ struct predict_observation predict_next_los(
 {
     double curr_time = start_utc;
     struct predict_observation obs;
-    double time_step = 0;
+    double time_step = 0.0;
 
     struct predict_position orbit;
-    predict_orbit( orbital_elements, &orbit, curr_time );
+    ( void ) predict_orbit( orbital_elements, &orbit, curr_time );
     predict_observe_orbit( observer, &orbit, &obs );
 
     // check whether AOS/LOS can happen after specified start time
@@ -315,7 +328,7 @@ struct predict_observation predict_next_los(
                                                                orbital_elements,
                                                                curr_time );
             curr_time = aos.time;
-            predict_orbit( orbital_elements, &orbit, curr_time );
+            ( void ) predict_orbit( orbital_elements, &orbit, curr_time );
             predict_observe_orbit( observer, &orbit, &obs );
         }
 
@@ -331,7 +344,7 @@ struct predict_observation predict_next_los(
             time_step = obs.elevation * 180.0 / M_PI * sqrt( orbit.altitude ) /
                         502500.0;
             curr_time += time_step;
-            predict_orbit( orbital_elements, &orbit, curr_time );
+            ( void ) predict_orbit( orbital_elements, &orbit, curr_time );
             predict_observe_orbit( observer, &orbit, &obs );
         } while( fabs( obs.elevation * 180.0 / M_PI ) >
                  AOSLOS_HORIZON_THRESHOLD );
@@ -355,7 +368,7 @@ static double elevation_derivative(
 {
     struct predict_position orbit;
     struct predict_observation observation;
-    predict_orbit( orbital_elements, &orbit, time );
+    ( void ) predict_orbit( orbital_elements, &orbit, time );
     predict_observe_orbit( observer, &orbit, &observation );
     return observation.elevation_rate;
 }
@@ -377,12 +390,14 @@ static struct predict_observation find_max_elevation(
     double upper_time )
 {
     double max_ele_time_candidate = ( upper_time + lower_time ) / 2.0;
-    int iteration = 0;
-    while(
-        ( fabs( lower_time - upper_time ) > MAXELE_TIME_EQUALITY_THRESHOLD ) &&
-        ( iteration < MAXELE_MAX_NUM_ITERATIONS ) )
+    int32_t iteration = 0;
+    double l = lower_time;
+    double u = upper_time;
+
+    while( ( fabs( l - u ) > MAXELE_TIME_EQUALITY_THRESHOLD ) &&
+           ( iteration < ( int32_t ) MAXELE_MAX_NUM_ITERATIONS ) )
     {
-        max_ele_time_candidate = ( upper_time + lower_time ) / 2.0;
+        max_ele_time_candidate = ( u + l ) / 2.0;
 
         // calculate derivatives for lower, upper and candidate
         double candidate_deriv = elevation_derivative( observer,
@@ -390,19 +405,19 @@ static struct predict_observation find_max_elevation(
                                                        max_ele_time_candidate );
         double lower_deriv = elevation_derivative( observer,
                                                    orbital_elements,
-                                                   lower_time );
+                                                   l );
         double upper_deriv = elevation_derivative( observer,
                                                    orbital_elements,
-                                                   upper_time );
+                                                   u );
 
         // check whether derivative has changed sign
-        if( candidate_deriv * lower_deriv < 0 )
+        if( ( candidate_deriv * lower_deriv ) < 0.0 )
         {
-            upper_time = max_ele_time_candidate;
+            u = max_ele_time_candidate;
         }
-        else if( candidate_deriv * upper_deriv < 0 )
+        else if( ( candidate_deriv * upper_deriv ) < 0.0 )
         {
-            lower_time = max_ele_time_candidate;
+            l = max_ele_time_candidate;
         }
         else
         {
@@ -414,7 +429,7 @@ static struct predict_observation find_max_elevation(
     // prepare output
     struct predict_position orbit;
     struct predict_observation observation;
-    predict_orbit( orbital_elements, &orbit, max_ele_time_candidate );
+    ( void ) predict_orbit( orbital_elements, &orbit, max_ele_time_candidate );
     predict_observe_orbit( observer, &orbit, &observation );
     return observation;
 }
@@ -426,84 +441,83 @@ struct predict_observation predict_at_max_elevation(
 {
     struct predict_observation ret_observation = { 0 };
 
-    if( predict_is_geosynchronous( orbital_elements ) )
+    if( !predict_is_geosynchronous( orbital_elements ) )
     {
-        return ret_observation;
-    }
+        struct predict_position orbit;
+        struct predict_observation observation;
+        ( void ) predict_orbit( orbital_elements, &orbit, start_time );
+        if( !orbit.decayed )
+        {
+            predict_observe_orbit( observer, &orbit, &observation );
 
-    struct predict_position orbit;
-    struct predict_observation observation;
-    predict_orbit( orbital_elements, &orbit, start_time );
-    if( orbit.decayed )
-    {
-        return ret_observation;
-    }
+            // bracket the solution by approximate times for AOS and LOS of the
+            // current or next pass
+            double lower_time = start_time;
+            double upper_time = start_time;
+            if( observation.elevation < 0 )
+            {
+                struct predict_observation
+                    aos = predict_next_aos( observer,
+                                            orbital_elements,
+                                            start_time );
+                lower_time = aos.time;
+            }
+            else
+            {
+                lower_time = step_pass( observer,
+                                        orbital_elements,
+                                        lower_time,
+                                        NEGATIVE_DIRECTION );
+            }
+            struct predict_observation los = predict_next_los( observer,
+                                                               orbital_elements,
+                                                               lower_time );
+            upper_time = los.time;
 
-    predict_observe_orbit( observer, &orbit, &observation );
+            // assume that we can only have two potential local maxima along the
+            // elevation curve, and be content with that. For most cases, we
+            // will only have one, unless it is a satellite in deep space with
+            // long passes and weird effects.
 
-    // bracket the solution by approximate times for AOS and LOS of the current
-    // or next pass
-    double lower_time = start_time;
-    double upper_time = start_time;
-    if( observation.elevation < 0 )
-    {
-        struct predict_observation aos = predict_next_aos( observer,
-                                                           orbital_elements,
-                                                           start_time );
-        lower_time = aos.time;
-    }
-    else
-    {
-        lower_time = step_pass( observer,
-                                orbital_elements,
-                                lower_time,
-                                NEGATIVE_DIRECTION );
-    }
-    struct predict_observation los = predict_next_los( observer,
+            // bracket by AOS/LOS
+            struct predict_observation
+                candidate_center = find_max_elevation( observer,
                                                        orbital_elements,
-                                                       lower_time );
-    upper_time = los.time;
+                                                       lower_time,
+                                                       upper_time );
 
-    // assume that we can only have two potential local maxima along the
-    // elevation curve, and be content with that. For most cases, we will only
-    // have one, unless it is a satellite in deep space with long passes and
-    // weird effects.
+            // bracket by a combination of the found candidate above and either
+            // AOS or LOS (will thus cover solutions within [aos, candidate] and
+            // [candidate, los])
+            struct predict_observation candidate_lower = find_max_elevation(
+                observer,
+                orbital_elements,
+                candidate_center.time - MAXELE_TIME_EQUALITY_THRESHOLD,
+                upper_time );
+            struct predict_observation candidate_upper = find_max_elevation(
+                observer,
+                orbital_elements,
+                lower_time,
+                candidate_center.time + MAXELE_TIME_EQUALITY_THRESHOLD );
 
-    // bracket by AOS/LOS
-    struct predict_observation
-        candidate_center = find_max_elevation( observer,
-                                               orbital_elements,
-                                               lower_time,
-                                               upper_time );
-
-    // bracket by a combination of the found candidate above and either AOS or
-    // LOS (will thus cover solutions within [aos, candidate] and [candidate,
-    // los])
-    struct predict_observation candidate_lower = find_max_elevation(
-        observer,
-        orbital_elements,
-        candidate_center.time - MAXELE_TIME_EQUALITY_THRESHOLD,
-        upper_time );
-    struct predict_observation candidate_upper = find_max_elevation(
-        observer,
-        orbital_elements,
-        lower_time,
-        candidate_center.time + MAXELE_TIME_EQUALITY_THRESHOLD );
-
-    // return the best candidate
-    if( ( candidate_center.elevation > candidate_lower.elevation ) &&
-        ( candidate_center.elevation > candidate_upper.elevation ) )
-    {
-        return candidate_center;
+            // return the best candidate
+            if( ( candidate_center.elevation > candidate_lower.elevation ) &&
+                ( candidate_center.elevation > candidate_upper.elevation ) )
+            {
+                ret_observation = candidate_center;
+            }
+            else if( candidate_lower.elevation > candidate_upper.elevation )
+            {
+                ret_observation = candidate_lower;
+            }
+            else
+            {
+                ret_observation = candidate_upper;
+            }
+        }
     }
-    else if( candidate_lower.elevation > candidate_upper.elevation )
-    {
-        return candidate_lower;
-    }
-    else
-    {
-        return candidate_upper;
-    }
+
+    return ret_observation;
 }
 
 double predict_doppler_shift( const struct predict_observation * obs,
