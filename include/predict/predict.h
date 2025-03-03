@@ -324,12 +324,21 @@ typedef struct
 /**
  * Create predict_orbital_elements_t from TLE strings.
  *
- * \param elements   Pointer to a static allocated predict_orbital_elements_t
- *struct. \param sgp4       Pointer to a static allocated sgp4 struct. \param
- *sdp4       Pointer to a static allocated sdp4 struct. \param tle_line_1 First
- *line of NORAD two-line element set string \param tle_line_2 Second line of
- *NORAD two-line element set string \return Processed TLE parameters \copyright
- *GPLv2+
+ *\param elements Pointer to a static allocated predict_orbital_elements_t
+ * struct.
+ *
+ * \param sgp4 Pointer to a static allocated sgp4 struct.
+ *
+ * \param sdp4 Pointer to a static allocated sdp4 struct.
+ *
+ * \param tle_line_1 First line of NORAD two-line element set string.
+ *
+ * \param tle_line_2 Second line of NORAD two-line element set string.
+ *
+ * \return Processed TLE parameters
+ *
+ * \copyright GPLv2+
+ *
  **/
 predict_orbital_elements_t * predict_parse_tle(
     predict_orbital_elements_t * orbital_elements,
@@ -337,6 +346,46 @@ predict_orbital_elements_t * predict_parse_tle(
     struct predict_sdp4 * sdp4,
     const char * tle_line_1,
     const char * tle_line_2 );
+
+/**
+ * Create predict_orbital_elements_t from a binary compact TLE format. 
+ * CAUTION! This function was designed for embedded systems that have 
+ * data transfer limitations, being intended to process the bare minimum 
+ * to predict a satellite position.
+ *
+ *\param elements Pointer to a static allocated predict_orbital_elements_t
+ * struct.
+ *
+ * \param sgp4 Pointer to a static allocated sgp4 struct.
+ *
+ * \param sdp4 Pointer to a static allocated sdp4 struct.
+ *
+ * \param compact_tle Buffer containing the serialized compact TLE that has
+ * the following format:
+ *
+ *  struct compact_tle __attribute__( ( packed ) )
+ *  {
+ *      uint16_t epoch_year;
+ *      double epoch_day;
+ *      uint32_t eccentricity;
+ *      float mean_anomaly;
+ *      float argument_of_perigee;
+ *      float bstar_drag_term;
+ *      double inclination;
+ *      double right_ascension;
+ *      double mean_motion;
+ *  };
+ *
+ *  All parameters are serialized in Network order (Big Endian).
+ *
+ * \return Processed TLE parameters
+ *
+ **/
+predict_orbital_elements_t * predict_parse_compact_tle(
+    predict_orbital_elements_t * orbital_elements,
+    struct predict_sgp4 * sgp4,
+    struct predict_sdp4 * sdp4,
+    const uint8_t * compact_tle );
 
 /**
  * Reset memory allocated in orbital elements structure.
