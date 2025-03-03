@@ -25,7 +25,7 @@ jobs:
         run: sudo apt install -y cppcheck
 
       - name: Execute CppCheck on header files
-        run: cppcheck --std=c99 --error-exitcode=-1 --addon=misra.py include/predict/
+        run: cppcheck --std=c99 --error-exitcode=-1 --addon=misra.py $PWD/include/predict/
 
       - name: Execute CppCheck on source files
-        run: cppcheck --std=c99 --error-exitcode=-1 --addon=misra.py -Iinclude/ src/
+        run: cppcheck --std=c99 --error-exitcode=-1 --addon=misra.py -I$PWD/include/ $PWD/src/
