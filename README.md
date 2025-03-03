@@ -18,7 +18,7 @@ The following list contains the status of the library files:
 
 - [X] Headers
 - [X] Orbit 
-- [ ] Observer
+- [ ] Observer ( Partially Complaint )
 - [X] SGP4
 - [ ] SDP4
 - [X] Sun

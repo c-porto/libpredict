@@ -28,4 +28,4 @@ jobs:
         run: cppcheck --std=c99 --error-exitcode=-1 --addon=misra.py $PWD/include/predict/*
 
       - name: Execute CppCheck on source files
-        run: cppcheck --std=c99 --error-exitcode=-1 --addon=misra.py -I$PWD/include/ $PWD/src/*
+        run: cppcheck --std=c99 --error-exitcode=-1 --addon=misra.py -I$PWD/include/ $PWD/src/julian_date.c $PWD/src/moon.c $PWD/src/observer.c $PWD/src/orbit.c $PWD/src/refraction.c $PWD/src/sdp4.c $PWD/src/sgp4.c $PWD/src/sun.c $PWD/src/unsorted.c

@@ -1,31 +1,289 @@
+#include <endian.h>
+#include <errno.h>
 #include <math.h>
 #include <stddef.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
 
 #include <predict/defs.h>
+#include <predict/predict.h>
 #include <predict/sdp4.h>
 #include <predict/sgp4.h>
 #include <predict/sun.h>
 #include <predict/unsorted.h>
 
-static bool is_eclipsed( const double pos[ 3 ],
-                         const double sol[ 3 ],
-                         double * depth );
-
-static bool predict_decayed( const predict_orbital_elements_t * orbital_elements,
-                             predict_julian_date_t time );
-
-static int32_t parse_tle_field_i32( const char * tle_sub_string,
-                                    int32_t * param );
-static int32_t parse_tle_field_i64( const char * tle_sub_string,
-                                    int64_t * param );
-static int32_t parse_tle_field_f64( const char * tle_sub_string,
-                                    double * param );
-
 // length of buffer used for extracting subsets of TLE strings for parsing
 #define SUBSTRING_BUFFER_LENGTH 50
+
+static bool predict_decayed( const predict_orbital_elements_t * orbital_elements,
+                             predict_julian_date_t time )
+{
+    double satepoch;
+    satepoch = DayNum( 1, 0, orbital_elements->epoch_year ) +
+               orbital_elements->epoch_day;
+
+    bool has_decayed = false;
+    if( satepoch +
+            ( ( 16.666666 - orbital_elements->mean_motion ) /
+              ( 10.0 * fabs( orbital_elements->derivative_mean_motion ) ) ) <
+        time )
+    {
+        has_decayed = true;
+    }
+    return has_decayed;
+}
+
+/* Calculates if a position is eclipsed.  */
+static bool is_eclipsed( const double pos[ 3 ],
+                         const double sol[ 3 ],
+                         double * depth )
+{
+    bool retval;
+    double Rho[ 3 ];
+    double earth[ 3 ];
+
+    /* Determine partial eclipse */
+    double sd_earth = asin_( EARTH_RADIUS_KM_WGS84 / vec3_length( pos ) );
+    vec3_sub( sol, pos, Rho );
+    double sd_sun = asin_( SOLAR_RADIUS_KM / vec3_length( Rho ) );
+    vec3_mul_scalar( pos, -1, earth );
+
+    double delta = acos_( vec3_dot( sol, earth ) / vec3_length( sol ) /
+                          vec3_length( earth ) );
+    *depth = sd_earth - sd_sun - delta;
+
+    if( sd_earth < sd_sun )
+    {
+        retval = false;
+    }
+    else if( *depth >= 0 )
+    {
+        retval = true;
+    }
+    else
+    {
+        retval = false;
+    }
+
+    return retval;
+}
+
+static int32_t parse_tle_field_i32( const char * tle_sub_string,
+                                    int32_t * param )
+{
+    int32_t err = 0;
+    char * end_ptr = NULL;
+
+    errno = 0;
+    int64_t tmp = ( int64_t ) strtoll( tle_sub_string, &end_ptr, 10 );
+
+    if( errno != 0 )
+    {
+        err = -1;
+    }
+
+    if( end_ptr == tle_sub_string )
+    {
+        err = -1;
+    }
+
+    if( ( tmp > INT32_MAX ) || ( tmp < INT32_MIN ) )
+    {
+        err = -1;
+    }
+
+    if( err == 0 )
+    {
+        *param = ( int32_t ) tmp;
+    }
+
+    return err;
+}
+
+static int32_t parse_tle_field_i64( const char * tle_sub_string,
+                                    int64_t * param )
+{
+    int32_t err = 0;
+    char * end_ptr = NULL;
+
+    errno = 0;
+    int64_t tmp = ( int64_t ) strtoll( tle_sub_string, &end_ptr, 10 );
+
+    if( errno != 0 )
+    {
+        err = -1;
+    }
+
+    if( end_ptr == tle_sub_string )
+    {
+        err = -1;
+    }
+
+    if( err == 0 )
+    {
+        *param = ( int64_t ) tmp;
+    }
+
+    return err;
+}
+
+static int32_t parse_tle_field_f64( const char * tle_sub_string,
+                                    double * param )
+{
+    int32_t err = 0;
+    char * end_ptr = NULL;
+
+    errno = 0;
+    double tmp = ( double ) strtod( tle_sub_string, &end_ptr );
+
+    if( errno != 0 )
+    {
+        err = -1;
+    }
+
+    if( end_ptr == tle_sub_string )
+    {
+        err = -1;
+    }
+
+    if( err == 0 )
+    {
+        *param = tmp;
+    }
+
+    return err;
+}
+
+static double deserialize_double( const uint8_t * buf )
+{
+    double value = 0.0;
+    uint64_t temp = 0U;
+
+    ( void ) memcpy( &temp, buf, sizeof( temp ) );
+
+    temp = be64toh( temp );
+
+    ( void ) mempcpy( &value, &temp, sizeof( value ) );
+
+    return value;
+}
+
+static float deserialize_float( const uint8_t * buf )
+{
+    float value = 0.0;
+    uint32_t temp = 0U;
+
+    ( void ) memcpy( &temp, buf, sizeof( temp ) );
+
+    temp = be32toh( temp );
+
+    ( void ) mempcpy( &value, &temp, sizeof( value ) );
+
+    return value;
+}
+
+predict_orbital_elements_t * predict_parse_compact_tle(
+    predict_orbital_elements_t * orbital_elements,
+    struct predict_sgp4 * sgp4,
+    struct predict_sdp4 * sdp4,
+    const uint8_t * compact_tle )
+{
+    predict_orbital_elements_t * m = NULL;
+    uint32_t tecc = 0U;
+
+    if( ( orbital_elements != NULL ) && ( compact_tle != NULL ) )
+    {
+        m = orbital_elements;
+
+        m->epoch_year = ( uint32_t ) ( ( ( uint32_t ) compact_tle[ 0 ] << 8U ) |
+                                       ( uint32_t ) compact_tle[ 1 ] );
+        m->epoch_day = deserialize_double( &compact_tle[ 2 ] );
+
+        ( void ) memcpy( &tecc, &compact_tle[ 10 ], sizeof( tecc ) );
+
+        m->eccentricity = ( double ) be32toh( tecc );
+        m->eccentricity *= 1.0e-07;
+
+        m->mean_anomaly = ( double ) deserialize_float( &compact_tle[ 14 ] );
+
+        m->argument_of_perigee = ( double ) deserialize_float(
+            &compact_tle[ 18 ] );
+
+        m->bstar_drag_term = ( double ) deserialize_float( &compact_tle[ 22 ] );
+
+        m->inclination = deserialize_double( &compact_tle[ 26 ] );
+
+        m->right_ascension = deserialize_double( &compact_tle[ 34 ] );
+
+        m->mean_motion = deserialize_double( &compact_tle[ 42 ] );
+
+        /* Period > 225 minutes is deep space */
+        double ao;
+        double xnodp;
+        double dd1;
+        double dd2;
+        double delo;
+        double a1;
+        double del1;
+        double r1;
+        double temp = TWO_PI / MINUTES_PER_DAY / MINUTES_PER_DAY;
+        double xno = m->mean_motion * temp *
+                     MINUTES_PER_DAY; // from old TLE struct
+        dd1 = ( XKE / xno );
+        dd2 = TWO_THIRD;
+        a1 = pow( dd1, dd2 );
+        r1 = cos( m->inclination * M_PI / 180.0 );
+        dd1 = ( 1.0 - ( m->eccentricity * m->eccentricity ) );
+        temp = CK2 * 1.5f * ( ( r1 * r1 * 3.0 ) - 1.0 ) / pow( dd1, 1.5 );
+        del1 = temp / ( a1 * a1 );
+        ao = a1 * ( 1.0 - ( del1 * ( ( TWO_THIRD * 0.5 ) +
+                                     ( del1 * ( ( del1 * 1.654320987654321 ) +
+                                                1.0 ) ) ) ) );
+        delo = temp / ( ao * ao );
+        xnodp = xno / ( delo + 1.0 );
+
+        /* Select a deep-space/near-earth ephemeris */
+        if( ( TWO_PI / xnodp / MINUTES_PER_DAY ) >= 0.15625 )
+        {
+            m->ephemeris = EPHEMERIS_SDP4;
+
+            m->ephemeris_data = sdp4;
+
+            if( m->ephemeris_data == NULL )
+            {
+                m = NULL;
+            }
+            else
+            {
+                // Initialize ephemeris data structure
+                sdp4_init( m, m->ephemeris_data );
+            }
+        }
+        else
+        {
+            m->ephemeris = EPHEMERIS_SGP4;
+
+            m->ephemeris_data = sgp4;
+
+            if( m->ephemeris_data == NULL )
+            {
+                m = NULL;
+            }
+            else
+            {
+                // Initialize ephemeris data structure
+                sgp4_init( m, m->ephemeris_data );
+            }
+        }
+    }
+    else
+    {
+        m = NULL;
+    }
+
+    return m;
+}
 
 predict_orbital_elements_t * predict_parse_tle(
     predict_orbital_elements_t * orbital_elements,
@@ -445,59 +703,6 @@ int32_t predict_orbit( const predict_orbital_elements_t * orbital_elements,
     return err;
 }
 
-static bool predict_decayed( const predict_orbital_elements_t * orbital_elements,
-                             predict_julian_date_t time )
-{
-    double satepoch;
-    satepoch = DayNum( 1, 0, orbital_elements->epoch_year ) +
-               orbital_elements->epoch_day;
-
-    bool has_decayed = false;
-    if( satepoch +
-            ( ( 16.666666 - orbital_elements->mean_motion ) /
-              ( 10.0 * fabs( orbital_elements->derivative_mean_motion ) ) ) <
-        time )
-    {
-        has_decayed = true;
-    }
-    return has_decayed;
-}
-
-/* Calculates if a position is eclipsed.  */
-static bool is_eclipsed( const double pos[ 3 ],
-                         const double sol[ 3 ],
-                         double * depth )
-{
-    bool retval;
-    double Rho[ 3 ];
-    double earth[ 3 ];
-
-    /* Determine partial eclipse */
-    double sd_earth = asin_( EARTH_RADIUS_KM_WGS84 / vec3_length( pos ) );
-    vec3_sub( sol, pos, Rho );
-    double sd_sun = asin_( SOLAR_RADIUS_KM / vec3_length( Rho ) );
-    vec3_mul_scalar( pos, -1, earth );
-
-    double delta = acos_( vec3_dot( sol, earth ) / vec3_length( sol ) /
-                          vec3_length( earth ) );
-    *depth = sd_earth - sd_sun - delta;
-
-    if( sd_earth < sd_sun )
-    {
-        retval = false;
-    }
-    else if( *depth >= 0 )
-    {
-        retval = true;
-    }
-    else
-    {
-        retval = false;
-    }
-
-    return retval;
-}
-
 double predict_squint_angle( const predict_observer_t * observer,
                              const struct predict_position * orbit,
                              double alon,
@@ -525,90 +730,4 @@ double predict_squint_angle( const predict_observer_t * observer,
                           obs.range );
 
     return squint;
-}
-
-static int32_t parse_tle_field_i32( const char * tle_sub_string,
-                                    int32_t * param )
-{
-    int32_t err = 0;
-    char * end_ptr = NULL;
-
-    errno = 0;
-    int64_t tmp = ( int64_t ) strtoll( tle_sub_string, &end_ptr, 10 );
-
-    if (errno != 0)
-    {
-        err = -1;
-    }
-
-    if( end_ptr == tle_sub_string )
-    {
-        err = -1;
-    }
-
-    if( ( tmp > INT32_MAX ) || ( tmp < INT32_MIN ) )
-    {
-        err = -1;
-    }
-
-    if( err == 0 )
-    {
-        *param = ( int32_t ) tmp;
-    }
-
-    return err;
-}
-
-static int32_t parse_tle_field_i64( const char * tle_sub_string,
-                                    int64_t * param )
-{
-    int32_t err = 0;
-    char * end_ptr = NULL;
-
-    errno = 0;
-    int64_t tmp = ( int64_t ) strtoll( tle_sub_string, &end_ptr, 10 );
-
-    if (errno != 0)
-    {
-        err = -1;
-    }
-
-    if( end_ptr == tle_sub_string )
-    {
-        err = -1;
-    }
-
-    if( err == 0 )
-    {
-        *param = ( int64_t ) tmp;
-    }
-
-    return err;
-}
-
-static int32_t parse_tle_field_f64( const char * tle_sub_string,
-                                    double * param )
-{
-    int32_t err = 0;
-    char * end_ptr = NULL;
-
-    errno = 0;
-    double tmp = ( double ) strtod( tle_sub_string, &end_ptr );
-
-    if (errno != 0)
-    {
-        err = -1;
-    }
-
-    if( end_ptr == tle_sub_string )
-    {
-        err = -1;
-    }
-
-    if( err == 0 )
-    {
-        *param = tmp;
-    }
-
-    return err;
 }
