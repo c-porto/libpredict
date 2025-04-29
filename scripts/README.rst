@@ -1,11 +1,11 @@
-Libpredict scripts
+libpredict scripts
 ==================
 
 Converting TLE lines to compact format
 --------------------------------------
 
 Libpredict provides a python script that converts the conventional TLE lines 
-to the a custom binary format. This format named "compact" has the bare minimum 
+to a custom binary format. This format was named as "compact" and has the bare minimum 
 information to predict the position of a satellite. The idea is to generate the 
 binary representation of the TLE lines beforehand and update the predictor at runtime.
 An example of its usage using the ISS TLE lines can be seen below:
